@@ -42,8 +42,8 @@ function formatBar(remainingPercent: number): string {
   const size = 15
   const filled = Math.round((clamped / 100) * size)
   const empty = size - filled
-  // Using more visual bar characters
-  return `\`[${"█".repeat(filled)}${"░".repeat(empty)}]\``
+  // Using characters that are more likely to have consistent width in most fonts
+  return `\`${"█".repeat(filled)}${" ".repeat(empty)}\``
 }
 
 function formatPlanType(planType: string): string {
@@ -82,9 +82,10 @@ function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
   const proxy = snapshot.proxyQuota
   if (!proxy) return ["#### → `proxy` No data"]
 
-  const lines: string[] = ["#### ▣ Mirrowel Proxy"]
+  const lines: string[] = ["### ▣ Mirrowel Proxy"]
 
   for (const provider of proxy.providers) {
+    lines.push("")
     lines.push(`**${provider.name}**`)
 
     for (const tierInfo of provider.tiers) {
@@ -108,7 +109,7 @@ function formatSnapshot(snapshot: UsageSnapshot): string[] {
   }
 
   const plan = snapshot.planType ? ` (${formatPlanType(snapshot.planType)})` : ""
-  const lines: string[] = [`#### → **${snapshot.provider.toUpperCase()}**${plan}`]
+  const lines: string[] = [`### → **${snapshot.provider.toUpperCase()}**${plan}`]
 
   const primary = snapshot.primary
   if (primary) {
@@ -156,7 +157,7 @@ export async function renderUsageStatus(options: {
     return
   }
 
-  const lines: string[] = ["### ▣ Usage Status", ""]
+  const lines: string[] = ["## ▣ Usage Status", ""]
 
   options.snapshots.forEach((snapshot, index) => {
     const snapshotLines = formatSnapshot(snapshot)
