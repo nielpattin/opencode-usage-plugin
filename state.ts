@@ -7,8 +7,18 @@ export type UsageState = {
   sessionID: string | null
   agent?: string
   model?: { providerID: string; modelID: string }
+  availableProviders: {
+    codex: boolean
+    proxy: boolean
+  }
 }
 
 export function createUsageState(): UsageState {
-  return { sessionID: null }
+  return {
+    sessionID: null,
+    availableProviders: {
+      codex: false,
+      proxy: false,
+    },
+  }
 }

@@ -76,7 +76,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   return snapshots
 }
 
-async function loadAuths(): Promise<AuthRecord> {
+export async function loadAuths(): Promise<AuthRecord> {
   const authPath = getAuthFilePath()
   const data = await Bun.file(authPath)
     .json()

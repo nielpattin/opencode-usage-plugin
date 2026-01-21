@@ -7,9 +7,24 @@ import type { Plugin } from "@opencode-ai/plugin"
 import { commandHooks, sessionHooks, proxyHooks, markSilent } from "./hooks"
 import { createUsageState } from "./state"
 import { usageTool, createProxyLimitsTool } from "./tools"
+import { loadAuths } from "./usage/fetch"
+import { loadProxyConfig } from "./providers/proxy/config"
 
 export const UsagePlugin: Plugin = async ({ client }) => {
   const state = createUsageState()
+
+  // Initial status check
+  try {
+    const [auths, proxyConfig] = await Promise.all([
+      loadAuths().catch(() => ({})),
+      loadProxyConfig().catch(() => null),
+    ])
+
+    state.availableProviders.codex = Boolean(auths["codex"] || auths["openai"])
+    state.availableProviders.proxy = Boolean(proxyConfig?.endpoint)
+  } catch {
+    // Fail silent, default to false
+  }
 
   // Helper to send inline status message
   async function sendStatusMessage(sessionID: string, text: string): Promise<void> {

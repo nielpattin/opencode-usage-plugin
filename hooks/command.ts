@@ -51,20 +51,31 @@ export function commandHooks(options: {
       }
 
       // 3. Resolve filter and handle supported/unsupported syntaxes
-      // If arguments are provided but don't match a provider alias, we treat it
-      // as an unsupported syntax and fall back to displaying everything.
       const filter = args || undefined
       const targetProvider = resolveProviderFilter(filter)
       
-      const effectiveFilter = targetProvider ? filter : undefined
+      // Filter logic:
+      // - If target matches a provider, use it.
+      // - If no target but args exist (unsupported syntax), fall back to all.
+      // - Special: only include providers that are actually available/configured.
+      let effectiveFilter = targetProvider ? filter : undefined
 
       const snapshots = await fetchUsageSnapshots(effectiveFilter)
       
+      // Post-fetch filtering: remove providers that are not configured
+      // unless specifically requested by name.
+      const filteredSnapshots = snapshots.filter(s => {
+        if (targetProvider) return true // User explicitly asked for it
+        if (s.provider === "codex") return options.state.availableProviders.codex
+        if (s.provider === "proxy") return options.state.availableProviders.proxy
+        return true
+      })
+
       await renderUsageStatus({
         client: options.client,
         state: options.state,
         sessionID: input.sessionID,
-        snapshots,
+        snapshots: filteredSnapshots,
         filter: effectiveFilter,
       })
       
