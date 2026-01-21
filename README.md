@@ -9,6 +9,8 @@ Track AI provider rate limits and quotas in real-time.
 - **Inline status** – Results appear directly in your chat, no context switching
 - **Zero setup** – Auto-detects providers from your existing config
 
+<img width="1300" height="900" alt="image" src="https://github.com/user-attachments/assets/cd49e450-f4b6-4314-b236-b3a92bffdb88" />
+
 ## Installation
 
 Add to your `opencode.json`:
