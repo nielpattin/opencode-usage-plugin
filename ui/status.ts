@@ -83,12 +83,22 @@ function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
       lines.push(`    ${tierLabel}:`)
 
       for (const group of tierInfo.quotaGroups) {
-        lines.push(`      ${group.name}: ${formatBar(group.remainingPct)} ${group.remaining}/${group.max}`)
+        const resetSuffix = group.resetTime ? formatResetSuffixISO(group.resetTime) : ""
+        lines.push(`      ${group.name}: ${formatBar(group.remainingPct)} ${group.remaining}/${group.max}${resetSuffix}`)
       }
     }
   }
 
   return lines
+}
+
+function formatResetSuffixISO(isoString: string): string {
+  try {
+    const resetAt = Math.floor(new Date(isoString).getTime() / 1000)
+    return ` (resets in ${formatResetTime(resetAt)})`
+  } catch {
+    return ""
+  }
 }
 
 function formatSnapshot(snapshot: UsageSnapshot): string[] {

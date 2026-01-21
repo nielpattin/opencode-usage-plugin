@@ -4,26 +4,47 @@
 
 import type { ProxyConfig } from "./types"
 
-const CONFIG_PATH = `${process.env.HOME}/.config/opencode/proxy-limits.json`
+const CONFIG_PATH = `${process.env.HOME}/.config/opencode/usage-config.jsonc`
 
 export async function loadProxyConfig(): Promise<ProxyConfig> {
   const file = Bun.file(CONFIG_PATH)
 
   if (!(await file.exists())) {
-    throw new Error(
-      `Config file not found: ${CONFIG_PATH}\n\n` +
-        `Create it with:\n` +
-        `{\n` +
-        `  "endpoint": "http://localhost:8000",\n` +
-        `  "apiKey": "your-key",\n` +
-        `  "timeout": 10000\n` +
-        `}`,
-    )
+    const content = `/**
+ * Usage Plugin Configuration
+ * 
+ * This file configures the connection to the Antigravity/Mirrowel proxy server
+ * and other usage tracking settings.
+ */
+{
+  // The base URL of the proxy server (required)
+  "endpoint": "http://localhost:8000",
+
+  // Optional API key for authentication
+  "apiKey": "VerysecretKey",
+
+  // Request timeout in milliseconds (default: 10000)
+  "timeout": 10000
+}
+`
+    await Bun.write(CONFIG_PATH, content)
+    // Return defaults immediately instead of throwing, so the plugin works first time
+    return {
+      endpoint: "http://localhost:8000",
+      apiKey: "VerysecretKey",
+      timeout: 10000,
+    }
+  }
+`
+    await Bun.write(CONFIG_PATH, content)
+    throw new Error(\`Created configuration template at: \${CONFIG_PATH}\`)
   }
 
   try {
     const content = await file.text()
-    const config = JSON.parse(content) as ProxyConfig
+    // Using a simple regex to strip comments for basic .jsonc support without extra deps
+    const cleanJson = content.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, "")
+    const config = JSON.parse(cleanJson) as ProxyConfig
 
     if (!config.endpoint) {
       throw new Error('Config must contain "endpoint" field')

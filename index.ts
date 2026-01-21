@@ -29,10 +29,12 @@ export const UsagePlugin: Plugin = async ({ client }) => {
   }
 
   const proxyHookHandlers = proxyHooks()
+  const commandHookHandlers = commandHooks({ client, state })
 
   return {
+    config: commandHookHandlers.config,
     ...authHooks(),
-    ...commandHooks({ client, state }),
+    "command.execute.before": commandHookHandlers["command.execute.before"],
     ...sessionHooks(state),
     ...proxyHookHandlers,
     tool: {

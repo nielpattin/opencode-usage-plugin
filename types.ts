@@ -50,6 +50,7 @@ export interface ProxyQuotaGroup {
   remaining: number
   max: number
   remainingPct: number
+  resetTime?: string | null
 }
 
 // Proxy tier info (paid vs free)
