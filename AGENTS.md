@@ -18,10 +18,17 @@ This plugin tracks and reports real-time usage snapshots (quotas, rate limits, c
 ## 🛠️ Development Workflow
 
 ### Commands
-Since this repository lacks a standard `package.json` in the root (dependencies are in `.opencode/package.json`), use the following conventions:
+Dependencies are in root `package.json`. The plugin loads via `opencode.json`.
 
-- **Build/Lint**: Standard TypeScript compilation should target `index.ts`
-- **Testing**: Many `probe-*.ts` and `debug-*.ts` files exist in the root for manual verification of API endpoints and token parsing
+- **Load Plugin**: `opencode` (automatically loads plugin specified in `opencode.json`)
+- **Build Check**: Verify `index.ts` compiles: `bun --version && bun index.ts --help 2>/dev/null || true`
+- **Test Storage**: `bun run debug-db.ts` (queries SQLite at `.opencode/plugin/usage/usage.sqlite`)
+- **Test Paths**: `bun run debug-path.ts` (verifies auth file path resolution)
+
+### Debug Scripts
+Root-level `debug-*.ts` files provide isolated testing without full plugin startup:
+- `debug-db.ts`: Query snapshot storage directly
+- `debug-path.ts`: Verify cross-platform path resolution
 
 ### Conventions
 - **Hooks**: MUST follow the pattern in `hooks/index.ts`. Use barrel exports to keep `index.ts` lean.
