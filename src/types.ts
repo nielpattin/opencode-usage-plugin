@@ -87,10 +87,3 @@ export interface UsageEntry {
   statusCode?: number
   latency?: number
 }
-  provider: string
-  model: string
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens?: number
-  cacheWriteTokens?: number
-}
