@@ -20,8 +20,13 @@ export const UsagePlugin: Plugin = async ({ client }) => {
       loadProxyConfig().catch(() => null),
     ])
 
-    state.availableProviders.codex = Boolean(auths["codex"] || auths["openai"])
-    state.availableProviders.proxy = Boolean(proxyConfig?.endpoint)
+    state.availableProviders.codex =
+      proxyConfig?.providers?.openai !== undefined
+        ? proxyConfig.providers.openai
+        : Boolean(auths["codex"] || auths["openai"])
+
+    state.availableProviders.proxy =
+      proxyConfig?.providers?.proxy !== undefined ? proxyConfig.providers.proxy : Boolean(proxyConfig?.endpoint)
   } catch {
     // Fail silent, default to false
   }
