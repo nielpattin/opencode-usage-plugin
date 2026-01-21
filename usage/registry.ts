@@ -3,7 +3,6 @@
  * Centralizes provider auth mapping for extensibility.
  */
 
-import type { CopilotAuth } from "../providers/copilot/types"
 import type { CodexAuth } from "../providers/codex"
 
 export type AuthEntry = {
@@ -17,7 +16,6 @@ export type AuthEntry = {
 export type AuthRecord = Record<string, AuthEntry>
 
 type ProviderAuthEntry =
-  | { providerID: "github-copilot"; auth: CopilotAuth }
   | { providerID: "codex"; auth: CodexAuth }
 
 type ProviderDescriptor = {
@@ -28,16 +26,6 @@ type ProviderDescriptor = {
 }
 
 const providerDescriptors: ProviderDescriptor[] = [
-  {
-    id: "github-copilot",
-    authKeys: ["github-copilot", "github-copilot-enterprise", "copilot"],
-    requiresOAuth: true,
-    buildAuth: (entry, usageToken) => ({
-      access: entry.access,
-      refresh: entry.refresh,
-      usageToken: usageToken ?? undefined,
-    }),
-  },
   {
     id: "codex",
     authKeys: ["codex", "openai"],

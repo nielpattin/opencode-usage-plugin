@@ -76,35 +76,8 @@ function formatSnapshot(snapshot: UsageSnapshot): string[] {
   const base = `→ [${snapshot.provider}]${plan}`
   const lines: string[] = [base]
 
-  if (snapshot.provider === "github-copilot" && snapshot.quota) {
-    const quota = snapshot.quota
-    const primary = snapshot.primary
-    const secondary = snapshot.secondary
-
-    if (primary) {
-      lines.push(`   Chat Usage  ${formatBar(primary.usedPercent)} ${primary.usedPercent.toFixed(0)}% used`)
-    }
-    if (secondary) {
-      lines.push(`   Completion  ${formatBar(secondary.usedPercent)} ${secondary.usedPercent.toFixed(0)}% used`)
-    }
-    if (quota.chat !== null) {
-      lines.push(`   Chat Limit: ${quota.chat}/month`)
-    }
-    if (quota.completions !== null) {
-      lines.push(`   Completions Limit: ${quota.completions}/month`)
-    }
-    if (quota.resetAt) {
-      lines.push(`   Resets in ${formatResetTime(quota.resetAt)}`)
-    }
-
-    if (lines.length === 1) {
-      lines.push("   No quota info available")
-    }
-
-    return lines
-  }
-
   const primary = snapshot.primary
+
   if (primary) {
     lines.push(
       `   Hourly       ${formatBar(primary.usedPercent)} ${primary.usedPercent.toFixed(0)}% used${formatResetSuffix(primary.resetsAt)}`,
