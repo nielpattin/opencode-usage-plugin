@@ -39,10 +39,11 @@ export async function sendStatusMessage(options: {
 
 function formatBar(remainingPercent: number): string {
   const clamped = Math.max(0, Math.min(100, remainingPercent))
-  const size = 20
+  const size = 15
   const filled = Math.round((clamped / 100) * size)
   const empty = size - filled
-  return `[${"=".repeat(filled)}${".".repeat(empty)}]`
+  // Using more visual bar characters
+  return `\`[${"█".repeat(filled)}${"░".repeat(empty)}]\``
 }
 
 function formatPlanType(planType: string): string {
@@ -65,13 +66,13 @@ function formatResetTime(resetAt: number): string {
 
 function formatResetSuffix(resetAt: number | null): string {
   if (!resetAt) return ""
-  return ` (resets in ${formatResetTime(resetAt)})`
+  return ` _(resets in ${formatResetTime(resetAt)})_`
 }
 
 function formatResetSuffixISO(isoString: string): string {
   try {
     const resetAt = Math.floor(new Date(isoString).getTime() / 1000)
-    return ` (resets in ${formatResetTime(resetAt)})`
+    return ` _(resets in ${formatResetTime(resetAt)})_`
   } catch {
     return ""
   }
@@ -79,21 +80,20 @@ function formatResetSuffixISO(isoString: string): string {
 
 function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
   const proxy = snapshot.proxyQuota
-  if (!proxy) return ["→ [proxy] No data"]
+  if (!proxy) return ["#### → `proxy` No data"]
 
-  const lines: string[] = ["→ [Google] Mirrowel Proxy"]
+  const lines: string[] = ["#### ▣ Mirrowel Proxy"]
 
   for (const provider of proxy.providers) {
-    lines.push("")
-    lines.push(`  ${provider.name}:`)
+    lines.push(`**${provider.name}**`)
 
     for (const tierInfo of provider.tiers) {
       const tierLabel = tierInfo.tier === "paid" ? "Paid" : "Free"
-      lines.push(`    ${tierLabel}:`)
+      lines.push(`- **${tierLabel}**`)
 
       for (const group of tierInfo.quotaGroups) {
         const resetSuffix = group.resetTime ? formatResetSuffixISO(group.resetTime) : ""
-        lines.push(`      ${group.name}: ${formatBar(group.remainingPct)} ${group.remaining}/${group.max}${resetSuffix}`)
+        lines.push(`  - ${group.name}: ${formatBar(group.remainingPct)} **${group.remaining}/${group.max}**${resetSuffix}`)
       }
     }
   }
@@ -108,32 +108,31 @@ function formatSnapshot(snapshot: UsageSnapshot): string[] {
   }
 
   const plan = snapshot.planType ? ` (${formatPlanType(snapshot.planType)})` : ""
-  const base = `→ [${snapshot.provider}]${plan}`
-  const lines: string[] = [base]
+  const lines: string[] = [`#### → **${snapshot.provider.toUpperCase()}**${plan}`]
 
   const primary = snapshot.primary
   if (primary) {
     const remainingPct = 100 - primary.usedPercent
     lines.push(
-      `  Hourly       ${formatBar(remainingPct)} ${remainingPct.toFixed(0)}% left${formatResetSuffix(primary.resetsAt)}`,
+      `- **Hourly**:   ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(primary.resetsAt)}`,
     )
   }
   const secondary = snapshot.secondary
   if (secondary) {
     const remainingPct = 100 - secondary.usedPercent
     lines.push(
-      `  Weekly       ${formatBar(remainingPct)} ${remainingPct.toFixed(0)}% left${formatResetSuffix(secondary.resetsAt)}`,
+      `- **Weekly**:   ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(secondary.resetsAt)}`,
     )
   }
   const codeReview = snapshot.codeReview
   if (codeReview) {
     const remainingPct = 100 - codeReview.usedPercent
     lines.push(
-      `  Code Review  ${formatBar(remainingPct)} ${remainingPct.toFixed(0)}% left${formatResetSuffix(codeReview.resetsAt)}`,
+      `- **Review**:   ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(codeReview.resetsAt)}`,
     )
   }
   if (snapshot.credits?.hasCredits) {
-    lines.push(`  Credits: ${snapshot.credits.balance}`)
+    lines.push(`- **Credits**: **${snapshot.credits.balance}**`)
   }
 
   return lines
@@ -147,23 +146,23 @@ export async function renderUsageStatus(options: {
   filter?: string
 }): Promise<void> {
   if (options.snapshots.length === 0) {
-    const filterMsg = options.filter ? ` for "${options.filter}"` : ""
+    const filterMsg = options.filter ? ` for \`${options.filter}\`` : ""
     await sendStatusMessage({
       client: options.client,
       state: options.state,
       sessionID: options.sessionID,
-      text: `▣ Usage | No data received${filterMsg}.`,
+      text: `### ▣ Usage | No data received${filterMsg}.`,
     })
     return
   }
 
-  const lines: string[] = ["▣ Usage Status", ""]
+  const lines: string[] = ["### ▣ Usage Status", ""]
 
   options.snapshots.forEach((snapshot, index) => {
     const snapshotLines = formatSnapshot(snapshot)
     for (const line of snapshotLines) lines.push(line)
     if (index < options.snapshots.length - 1) {
-      lines.push("")
+      lines.push("\n---")
     }
   })
 
