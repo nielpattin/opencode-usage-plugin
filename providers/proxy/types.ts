@@ -2,11 +2,15 @@
  * Type definitions for the Antigravity proxy provider.
  */
 
-/** Configuration stored in ~/.config/opencode/proxy-limits.json */
+/** Configuration stored in ~/.config/opencode/usage-config.jsonc */
 export type ProxyConfig = {
   endpoint: string
   apiKey?: string
   timeout?: number
+  providers?: {
+    openai?: boolean
+    proxy?: boolean
+  }
 }
 
 /** Token statistics from the proxy */

@@ -13,18 +13,26 @@ export async function loadProxyConfig(): Promise<ProxyConfig> {
     const content = `/**
  * Usage Plugin Configuration
  * 
- * This file configures the connection to the Antigravity/Mirrowel proxy server
- * and other usage tracking settings.
+ * This file configures tracking for different AI providers.
  */
 {
-  // The base URL of the proxy server (required)
+  // --- Proxy Settings ---
+  // The base URL of the proxy server (required for proxy tracking)
   "endpoint": "http://localhost:8000",
 
   // Optional API key for authentication
   "apiKey": "VerysecretKey",
 
   // Request timeout in milliseconds (default: 10000)
-  "timeout": 10000
+  "timeout": 10000,
+
+  // --- Provider Visibility ---
+  // Explicitly enable/disable providers in the default report.
+  // If omitted, the plugin will auto-detect based on auth/config presence.
+  "providers": {
+    "openai": true,
+    "proxy": true
+  }
 }
 `
     await Bun.write(CONFIG_PATH, content)
@@ -33,6 +41,10 @@ export async function loadProxyConfig(): Promise<ProxyConfig> {
       endpoint: "http://localhost:8000",
       apiKey: "VerysecretKey",
       timeout: 10000,
+      providers: {
+        openai: true,
+        proxy: true,
+      },
     }
   }
 
