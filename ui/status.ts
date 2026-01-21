@@ -39,11 +39,83 @@ export async function sendStatusMessage(options: {
 
 function formatBar(remainingPercent: number): string {
   const clamped = Math.max(0, Math.min(100, remainingPercent))
-  const size = 15
+  const size = 10
   const filled = Math.round((clamped / 100) * size)
   const empty = size - filled
-  // Using characters that are more likely to have consistent width in most fonts
-  return `\`${"█".repeat(filled)}${" ".repeat(empty)}\``
+  // Using solid block and light shade which are historically matched in width
+  return `\`${"█".repeat(filled)}${"░".repeat(empty)}\``
+}
+
+function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
+  const proxy = snapshot.proxyQuota
+  if (!proxy) return ["#### → `proxy` No data"]
+
+  const lines: string[] = ["### ▣ Mirrowel Proxy"]
+
+  for (const provider of proxy.providers) {
+    lines.push("")
+    lines.push(`**${provider.name}**`)
+    lines.push("| Tier | Group | Usage | Remaining |")
+    lines.push("| :--- | :--- | :--- | :--- |")
+
+    for (const tierInfo of provider.tiers) {
+      const tierLabel = tierInfo.tier === "paid" ? "Paid" : "Free"
+
+      for (const group of tierInfo.quotaGroups) {
+        const resetSuffix = group.resetTime ? formatResetTimeISOShort(group.resetTime) : ""
+        const remainingStr = `**${group.remaining}/${group.max}**${resetSuffix}`
+        lines.push(`| ${tierLabel} | ${group.name} | ${formatBar(group.remainingPct)} | ${remainingStr} |`)
+      }
+    }
+  }
+
+  return lines
+}
+
+function formatResetTimeISOShort(isoString: string): string {
+  try {
+    const resetAt = Math.floor(new Date(isoString).getTime() / 1000)
+    return ` _(${formatResetTime(resetAt)})_`
+  } catch {
+    return ""
+  }
+}
+
+function formatSnapshot(snapshot: UsageSnapshot): string[] {
+  // Handle proxy provider
+  if (snapshot.provider === "proxy" && snapshot.proxyQuota) {
+    return formatProxySnapshot(snapshot)
+  }
+
+  const plan = snapshot.planType ? ` (${formatPlanType(snapshot.planType)})` : ""
+  const lines: string[] = [`### → **${snapshot.provider.toUpperCase()}**${plan}`, ""]
+
+  const primary = snapshot.primary
+  if (primary) {
+    const remainingPct = 100 - primary.usedPercent
+    lines.push(
+      `- **Hourly**: ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(primary.resetsAt)}`,
+    )
+  }
+  const secondary = snapshot.secondary
+  if (secondary) {
+    const remainingPct = 100 - secondary.usedPercent
+    lines.push(
+      `- **Weekly**: ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(secondary.resetsAt)}`,
+    )
+  }
+  const codeReview = snapshot.codeReview
+  if (codeReview) {
+    const remainingPct = 100 - codeReview.usedPercent
+    lines.push(
+      `- **Review**: ${formatBar(remainingPct)} **${remainingPct.toFixed(0)}%** left${formatResetSuffix(codeReview.resetsAt)}`,
+    )
+  }
+  if (snapshot.credits?.hasCredits) {
+    lines.push(`- **Credits**: **${snapshot.credits.balance}**`)
+  }
+
+  return lines
 }
 
 function formatPlanType(planType: string): string {
