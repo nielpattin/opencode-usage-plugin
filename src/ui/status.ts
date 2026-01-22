@@ -103,13 +103,16 @@ function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
     lines.push(`  ${provider.name}:`)
 
     for (const tierInfo of provider.tiers) {
-      const tierLabel = tierInfo.tier === "paid" ? "Paid" : "Free"
-      lines.push(`    ${tierLabel}:`)
+      if (tierInfo.tier !== "none") {
+        const tierLabel = tierInfo.tier === "paid" ? "Paid" : "Free"
+        lines.push(`    ${tierLabel}:`)
+      }
 
       for (const group of tierInfo.quotaGroups) {
         const resetSuffix = group.resetTime ? formatResetSuffixISO(group.resetTime) : ""
         const label = `${group.name}:`.padEnd(9)
-        lines.push(`      ${label} ${formatBar(group.remainingPct)} ${group.remaining}/${group.max}${resetSuffix}`)
+        const indent = tierInfo.tier === "none" ? "    " : "      "
+        lines.push(`${indent}${label} ${formatBar(group.remainingPct)} ${group.remaining}/${group.max}${resetSuffix}`)
       }
     }
   }
