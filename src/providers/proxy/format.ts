@@ -7,9 +7,27 @@ import type { ProxyResponse, CredentialData, GroupUsage } from "./types"
 const GROUP_MAPPING: Record<string, string> = {
   "claude": "claude",
   "g3-pro": "g3-pro",
-  "g3-flash": "g3-fla",
+  "g3-flash": "g3-flash",
+  "g25-flash": "25-flash",
+  "g25-lite": "25-lite",
   "pro": "g3-pro",
-  "3-flash": "g3-fla"
+  "3-flash": "g3-flash",
+  "25-flash": "25-flash",
+  "25-lite": "25-lite"
+}
+
+// Display name ordering priority
+const GROUP_ORDER: string[] = ["claude", "g3-pro", "g3-flash", "25-flash", "25-lite"]
+
+function sortGroupNames(groups: Map<string, GroupQuota>): string[] {
+  return Array.from(groups.keys()).sort((a, b) => {
+    const aIndex = GROUP_ORDER.indexOf(a)
+    const bIndex = GROUP_ORDER.indexOf(b)
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+    if (aIndex !== -1) return -1
+    if (bIndex !== -1) return 1
+    return a.localeCompare(b)
+  })
 }
 
 function formatBar(remainingPercent: number): string {
@@ -127,7 +145,9 @@ export function formatProxyLimits(data: ProxyResponse): string {
       const tierLabel = tierName === "paid" ? "Paid" : "Free"
       lines.push(`  ${tierLabel}:`)
 
-      for (const [groupName, quota] of quotas) {
+      const sortedNames = sortGroupNames(quotas)
+      for (const groupName of sortedNames) {
+        const quota = quotas.get(groupName)!
         const remainingPct = quota.max > 0 ? (quota.remaining / quota.max) * 100 : 0
         const resetSuffix = quota.remaining === 0 ? formatResetTime(quota.resetTime) : ""
         lines.push(`    ${groupName}: ${formatBar(remainingPct)} ${quota.remaining}/${quota.max}${resetSuffix}`)

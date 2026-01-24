@@ -17,13 +17,31 @@ export { formatProxyLimits } from "./format"
 const GROUP_MAPPING: Record<string, string> = {
   "claude": "claude",
   "g3-pro": "g3-pro",
-  "g3-flash": "g3-fla",
+  "g3-flash": "g3-flash",
   "g25-flash": "25-flash",
   "g25-lite": "25-lite",
   "pro": "g3-pro",
-  "3-flash": "g3-fla",
+  "3-flash": "g3-flash",
   "25-flash": "25-flash",
   "25-lite": "25-lite"
+}
+
+// Display name ordering priority
+const GROUP_ORDER: string[] = ["claude", "g3-pro", "g3-flash", "25-flash", "25-lite"]
+
+function sortQuotaGroups(groups: ProxyQuotaGroup[]): ProxyQuotaGroup[] {
+  return groups.sort((a, b) => {
+    const aIndex = GROUP_ORDER.indexOf(a.name)
+    const bIndex = GROUP_ORDER.indexOf(b.name)
+    // Both in priority list: sort by index
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+    // Only a in priority list: a comes first
+    if (aIndex !== -1) return -1
+    // Only b in priority list: b comes first
+    if (bIndex !== -1) return 1
+    // Neither in priority list: alphabetical
+    return a.name.localeCompare(b.name)
+  })
 }
 
 function normalizeTier(tier?: string): "paid" | "free" {
@@ -123,10 +141,10 @@ function aggregateByTier(credentials: CredentialData[]): ProxyTierInfo[] {
 
   const result: ProxyTierInfo[] = []
   if (tiers.paid.size > 0) {
-    result.push({ tier: "paid", quotaGroups: Array.from(tiers.paid.values()) })
+    result.push({ tier: "paid", quotaGroups: sortQuotaGroups(Array.from(tiers.paid.values())) })
   }
   if (tiers.free.size > 0) {
-    result.push({ tier: "free", quotaGroups: Array.from(tiers.free.values()) })
+    result.push({ tier: "free", quotaGroups: sortQuotaGroups(Array.from(tiers.free.values())) })
   }
   return result
 }
