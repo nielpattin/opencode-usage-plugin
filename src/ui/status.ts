@@ -127,9 +127,19 @@ function formatCopilotSnapshot(snapshot: UsageSnapshot): string[] {
   const lines: string[] = ["→ [GITHUB] Copilot"]
   const resetSuffix = copilot.resetTime ? formatResetSuffixISO(copilot.resetTime) : ""
   const totalLabel = copilot.total === -1 ? "∞" : copilot.total.toString()
-  const label = "Premium:".padEnd(13)
+  const chatLabel = "Chat:".padEnd(13)
 
-  lines.push(`  ${label} ${formatBar(copilot.percentRemaining)} ${copilot.used}/${totalLabel}${resetSuffix}`)
+  lines.push(`  ${chatLabel} ${formatBar(copilot.percentRemaining)} ${copilot.used}/${totalLabel}${resetSuffix}`)
+
+  if (copilot.completionsUsed !== undefined && copilot.completionsTotal !== undefined) {
+    const compLabel = "Completions:".padEnd(13)
+    const compPct = Math.round(
+      ((copilot.completionsTotal - copilot.completionsUsed) / copilot.completionsTotal) * 100,
+    )
+    lines.push(
+      `  ${compLabel} ${formatBar(compPct)} ${copilot.completionsUsed}/${copilot.completionsTotal}`,
+    )
+  }
 
   return lines
 }

@@ -9,6 +9,7 @@ import type { CopilotQuota } from "../../types.js"
 export interface CopilotInternalUserResponse {
   limited_user_quotas?: {
     chat?: number
+    completions?: number
   }
   limited_user_reset_date?: string
   quota_reset_date: string
@@ -19,6 +20,10 @@ export interface CopilotInternalUserResponse {
       remaining: number
       unlimited: boolean
     }
+  }
+  monthly_quotas?: {
+    chat: number
+    completions: number
   }
 }
 
@@ -34,13 +39,18 @@ export interface BillingUsageResponse {
 export function toCopilotQuotaFromInternal(data: CopilotInternalUserResponse): CopilotQuota | null {
   // Handle "limited" user format (Free/Pro limited)
   if (data.limited_user_quotas) {
-    const remaining = data.limited_user_quotas.chat ?? 0
-    const total = 50 // Copilot Free limit
+    const chatRemaining = data.limited_user_quotas.chat ?? 0
+    const chatTotal = data.monthly_quotas?.chat ?? 50
+    const completionsRemaining = data.limited_user_quotas.completions ?? 0
+    const completionsTotal = data.monthly_quotas?.completions ?? 2000
+
     return {
-      used: Math.max(0, total - remaining),
-      total: total,
-      percentRemaining: Math.round((remaining / total) * 100),
+      used: Math.max(0, chatTotal - chatRemaining),
+      total: chatTotal,
+      percentRemaining: Math.round((chatRemaining / chatTotal) * 100),
       resetTime: data.limited_user_reset_date || data.quota_reset_date,
+      completionsUsed: Math.max(0, completionsTotal - completionsRemaining),
+      completionsTotal: completionsTotal,
     }
   }
 

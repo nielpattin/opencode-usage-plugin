@@ -37,6 +37,8 @@ export interface CopilotQuota {
   total: number
   percentRemaining: number
   resetTime?: string | null
+  completionsUsed?: number
+  completionsTotal?: number
 }
 
 export interface ProxyQuotaGroup {
