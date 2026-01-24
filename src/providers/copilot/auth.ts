@@ -11,7 +11,15 @@ import { join } from "path"
 import { getAppDataPath, getAuthFilePath } from "../../utils/paths.js"
 import { type CopilotAuthData, type CopilotQuotaConfig } from "./types.js"
 
-function getUsageTokenPath(): string {
+export function getQuotaConfigPath(): string {
+  return join(
+    process.env.XDG_CONFIG_HOME || join(homedir(), ".config"),
+    "opencode",
+    "copilot-quota-token.json",
+  )
+}
+
+export function getUsageTokenPath(): string {
   return join(getAppDataPath(), "copilot-usage-token.json")
 }
 
@@ -47,11 +55,7 @@ export async function readCopilotAuth(): Promise<CopilotAuthData | null> {
 
 export function readQuotaConfig(): CopilotQuotaConfig | null {
   try {
-    const configPath = join(
-      process.env.XDG_CONFIG_HOME || join(homedir(), ".config"),
-      "opencode",
-      "copilot-quota-token.json",
-    )
+    const configPath = getQuotaConfigPath()
     if (!existsSync(configPath)) return null
 
     const content = readFileSync(configPath, "utf-8")
