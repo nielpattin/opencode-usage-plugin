@@ -1,0 +1,68 @@
+/**
+ * providers/copilot/auth.ts
+ * Provides authentication and configuration helpers for GitHub Copilot.
+ * Handles local auth token discovery and quota configuration reading.
+ */
+
+import { existsSync, readFileSync } from "fs"
+import { readFile } from "fs/promises"
+import { homedir } from "os"
+import { join } from "path"
+import { getAppDataPath, getAuthFilePath } from "../../utils/paths.js"
+import { type CopilotAuthData, type CopilotQuotaConfig } from "./types.js"
+
+export function getQuotaConfigPath(): string {
+  return join(
+    process.env.XDG_CONFIG_HOME || join(homedir(), ".config"),
+    "opencode",
+    "copilot-quota-token.json",
+  )
+}
+
+export function getUsageTokenPath(): string {
+  return join(getAppDataPath(), "copilot-usage-token.json")
+}
+
+export async function readCopilotAuth(): Promise<CopilotAuthData | null> {
+  try {
+    const usagePath = getUsageTokenPath()
+    if (existsSync(usagePath)) {
+      const content = await readFile(usagePath, "utf-8")
+      const data = JSON.parse(content)
+      if (data?.token) {
+        return {
+          type: "oauth",
+          refresh: data.token,
+          access: data.token,
+        }
+      }
+    }
+
+    const authPath = getAuthFilePath()
+    if (existsSync(authPath)) {
+      const content = await readFile(authPath, "utf-8")
+      const authData = JSON.parse(content)
+      const copilotAuth = authData?.["github-copilot"] || authData?.["copilot"]
+      if (copilotAuth) {
+        return copilotAuth
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+export function readQuotaConfig(): CopilotQuotaConfig | null {
+  try {
+    const configPath = getQuotaConfigPath()
+    if (!existsSync(configPath)) return null
+
+    const content = readFileSync(configPath, "utf-8")
+    const parsed = JSON.parse(content) as CopilotQuotaConfig
+    if (!parsed?.token || !parsed?.username || !parsed?.tier) return null
+    return parsed
+  } catch {
+    return null
+  }
+}

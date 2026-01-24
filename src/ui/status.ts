@@ -120,9 +120,39 @@ function formatProxySnapshot(snapshot: UsageSnapshot): string[] {
   return lines
 }
 
+function formatCopilotSnapshot(snapshot: UsageSnapshot): string[] {
+  const copilot = snapshot.copilotQuota
+  if (!copilot) return ["→ [copilot] No data"]
+
+  const lines: string[] = ["→ [GITHUB] Copilot"]
+  const resetSuffix = copilot.resetTime ? formatResetSuffixISO(copilot.resetTime) : ""
+  const totalLabel = copilot.total === -1 ? "∞" : copilot.total.toString()
+  const chatLabel = "Chat:".padEnd(13)
+
+  lines.push(`  ${chatLabel} ${formatBar(copilot.percentRemaining)} ${copilot.used}/${totalLabel}${resetSuffix}`)
+
+  if (copilot.completionsUsed !== undefined && copilot.completionsTotal !== undefined) {
+    const compLabel = "Completions:".padEnd(13)
+    const compPct =
+      copilot.completionsTotal > 0
+        ? Math.round(
+            ((copilot.completionsTotal - copilot.completionsUsed) / copilot.completionsTotal) * 100,
+          )
+        : 0
+    lines.push(
+      `  ${compLabel} ${formatBar(compPct)} ${copilot.completionsUsed}/${copilot.completionsTotal}`,
+    )
+  }
+
+  return lines
+}
+
 function formatSnapshot(snapshot: UsageSnapshot): string[] {
   if (snapshot.provider === "proxy" && snapshot.proxyQuota) {
     return formatProxySnapshot(snapshot)
+  }
+  if (snapshot.provider === "copilot" && snapshot.copilotQuota) {
+    return formatCopilotSnapshot(snapshot)
   }
 
   const plan = snapshot.planType ? ` (${formatPlanType(snapshot.planType)})` : ""

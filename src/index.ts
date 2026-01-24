@@ -9,6 +9,9 @@ import { createUsageState } from "./state"
 import { loadAuths } from "./usage/fetch"
 import { loadProxyConfig } from "./providers/proxy/config"
 
+import { existsSync } from "fs"
+import { getQuotaConfigPath, getUsageTokenPath } from "./providers/copilot/auth"
+
 export const UsagePlugin: Plugin = async ({ client }) => {
   const state = createUsageState()
 
@@ -25,6 +28,14 @@ export const UsagePlugin: Plugin = async ({ client }) => {
 
     state.availableProviders.proxy =
       proxyConfig?.providers?.proxy !== undefined ? proxyConfig.providers.proxy : Boolean(proxyConfig?.endpoint)
+
+    const authRecord = auths as Record<string, unknown>
+    state.availableProviders.copilot = Boolean(
+      authRecord["github-copilot"] ||
+        authRecord["copilot"] ||
+        existsSync(getQuotaConfigPath()) ||
+        existsSync(getUsageTokenPath()),
+    )
   } catch {}
 
   async function sendStatusMessage(sessionID: string, text: string): Promise<void> {
