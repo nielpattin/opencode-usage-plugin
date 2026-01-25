@@ -16,7 +16,6 @@ export type AuthRecord = Record<string, AuthEntry>
 
 type ProviderAuthEntry =
   | { providerID: "codex"; auth: CodexAuth }
-  | { providerID: "copilot"; auth: void }
 
 type ProviderDescriptor = {
   id: ProviderAuthEntry["providerID"]
@@ -34,12 +33,6 @@ const providerDescriptors: ProviderDescriptor[] = [
       access: entry.access,
       accountId: entry.accountId,
     }),
-  },
-  {
-    id: "copilot",
-    authKeys: ["copilot", "github-copilot"],
-    requiresOAuth: false,
-    buildAuth: () => {},
   },
 ]
 
