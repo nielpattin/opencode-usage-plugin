@@ -85,9 +85,7 @@ export interface UsageSnapshot {
   secondary: RateLimitWindow | null
   codeReview: RateLimitWindow | null
   credits: CreditsSnapshot | null
-  // Proxy specific fields
   proxyQuota?: ProxyQuota
-  // Copilot specific fields
   copilotQuota?: CopilotQuota
   updatedAt: number
 }

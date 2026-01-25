@@ -2,8 +2,6 @@
  * Type definitions for the Antigravity proxy provider.
  */
 
-/** Configuration stored in ~/.config/opencode/usage-config.jsonc */
-/** Token statistics from the proxy */
 export type TokenStats = {
   input_cached?: number
   input_uncached?: number

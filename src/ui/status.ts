@@ -14,7 +14,6 @@ export async function sendStatusMessage(options: {
   sessionID: string
   text: string
 }): Promise<void> {
-  // 1. Send to Companion via Bus
   // @ts-ignore
   const bus = options.client.bus
   if (bus) {
@@ -30,7 +29,6 @@ export async function sendStatusMessage(options: {
     } catch {}
   }
 
-  // 2. Send plain message to TUI
   await options.client.session
     .prompt({
       path: { id: options.sessionID },
@@ -46,7 +44,6 @@ export async function sendStatusMessage(options: {
       },
     })
     .catch(async () => {
-      // 3. Fallback: Toast
       await options.client.tui
         .showToast({
           body: { title: "Usage Status", message: options.text, variant: "info" },

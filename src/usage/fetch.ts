@@ -56,7 +56,6 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   const entries = resolveProviderAuths(auths, null)
   const snapshots: UsageSnapshot[] = []
 
-  // Fetch from auth-based providers
   const fetches = entries
     .filter((entry) => !targetProvider || entry.providerID === targetProvider)
     .filter((entry) => isProviderEnabled(entry.providerID))
@@ -67,7 +66,6 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
       if (snapshot) snapshots.push(snapshot)
     })
 
-  // Always include special providers (no auth entries needed) if no filter or filter matches
   const specialProviders = ["proxy", "copilot"]
   for (const id of specialProviders) {
     if ((!targetProvider || targetProvider === id) && isProviderEnabled(id)) {

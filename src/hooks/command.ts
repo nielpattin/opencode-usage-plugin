@@ -56,7 +56,7 @@ export function commandHooks(options: {
       const snapshots = await fetchUsageSnapshots(effectiveFilter)
 
       const filteredSnapshots = snapshots.filter(s => {
-        if (targetProvider) return true // User explicitly asked for it
+        if (targetProvider) return true
         if (s.provider === "codex") return options.state.availableProviders.codex
         if (s.provider === "proxy") return options.state.availableProviders.proxy
         if (s.provider === "copilot") return options.state.availableProviders.copilot
@@ -70,7 +70,7 @@ export function commandHooks(options: {
         snapshots: filteredSnapshots,
         filter: effectiveFilter,
       })
-      
+
       throw new Error("__USAGE_COMMAND_HANDLED__")
     },
   }

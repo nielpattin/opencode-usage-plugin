@@ -25,20 +25,15 @@ const GROUP_MAPPING: Record<string, string> = {
   "25-lite": "25-lite"
 }
 
-// Display name ordering priority
 const GROUP_ORDER: string[] = ["claude", "g3-pro", "g3-flash", "25-flash", "25-lite"]
 
 function sortQuotaGroups(groups: ProxyQuotaGroup[]): ProxyQuotaGroup[] {
   return groups.sort((a, b) => {
     const aIndex = GROUP_ORDER.indexOf(a.name)
     const bIndex = GROUP_ORDER.indexOf(b.name)
-    // Both in priority list: sort by index
     if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
-    // Only a in priority list: a comes first
     if (aIndex !== -1) return -1
-    // Only b in priority list: b comes first
     if (bIndex !== -1) return 1
-    // Neither in priority list: alphabetical
     return a.name.localeCompare(b.name)
   })
 }
@@ -50,10 +45,6 @@ function normalizeTier(tier?: string): "paid" | "free" {
   return "free"
 }
 
-/**
- * Extract quota groups from group_usage data
- * New API structure: group_usage[groupName].windows[windowName]
- */
 function parseQuotaGroupsFromCredential(
   groupUsage: Record<string, GroupUsage> | undefined,
 ): ProxyQuotaGroup[] {
@@ -65,11 +56,9 @@ function parseQuotaGroupsFromCredential(
     const mappedName = GROUP_MAPPING[groupName]
     if (!mappedName) continue
 
-    // Find the window with the best data (prefer daily, then 5h, then any)
     const windows = groupData.windows || {}
     let bestWindow: { limit?: number; remaining: number; reset_at?: number | null } | null = null
 
-    // Priority order for windows
     const windowPriority = ["daily", "5h", "1h", "15m"]
     for (const windowName of windowPriority) {
       if (windows[windowName]) {
@@ -78,15 +67,12 @@ function parseQuotaGroupsFromCredential(
       }
     }
 
-    // Fallback to any available window
     if (!bestWindow && Object.keys(windows).length > 0) {
       bestWindow = Object.values(windows)[0]
     }
 
     if (!bestWindow) continue
 
-    // Use a unique key for grouping within a tier to avoid cross-credential collisions
-    // but allow summing across multiple credentials of the SAME tier if they share a model group
     result.set(mappedName, {
       name: mappedName,
       remaining: bestWindow.remaining,
@@ -105,9 +91,6 @@ function aggregateByProvider(provider: Provider): ProxyTierInfo[] {
     free: new Map(),
   }
 
-  // 1. Process individual credentials into THEIR RESPECTIVE TIER BUCKETS
-  // We sum only within the same tier to show "How much I have in total for my Paid accounts"
-  // and "How much I have in total for my Free accounts" separately.
   if (provider.credentials) {
     for (const cred of Object.values(provider.credentials)) {
       const tier = normalizeTier(cred.tier)
@@ -128,7 +111,6 @@ function aggregateByProvider(provider: Provider): ProxyTierInfo[] {
     }
   }
 
-  // Final percentage calculation: calculated individually per tier bucket
   for (const tierGroups of Object.values(tiers)) {
     for (const group of tierGroups.values()) {
       group.remainingPct = group.max > 0 ? Math.round((group.remaining / group.max) * 100) : 0

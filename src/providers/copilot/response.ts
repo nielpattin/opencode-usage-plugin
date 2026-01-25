@@ -37,12 +37,10 @@ export interface BillingUsageResponse {
 }
 
 export function toCopilotQuotaFromInternal(data: CopilotInternalUserResponse): CopilotQuota | null {
-  // Handle "limited" user format (Free/Pro limited)
   if (data.limited_user_quotas) {
     const chatRemainingRaw = data.limited_user_quotas.chat ?? 0
     const chatTotalRaw = data.monthly_quotas?.chat ?? 0
     
-    // Scaling for Chat: 500 units in API = 50 actual requests
     const chatScale = chatTotalRaw === 500 ? 10 : 1
     const chatRemaining = Math.floor(chatRemainingRaw / chatScale)
     const chatTotal = Math.floor(chatTotalRaw / chatScale)
@@ -50,7 +48,6 @@ export function toCopilotQuotaFromInternal(data: CopilotInternalUserResponse): C
     const completionsRemainingRaw = data.limited_user_quotas.completions ?? 0
     const completionsTotalRaw = data.monthly_quotas?.completions ?? 2000
     
-    // Scaling for Completions: 4000 units in API = 2000 actual requests
     const compScale = completionsTotalRaw === 4000 ? 2 : 1
     const completionsRemaining = Math.floor(completionsRemainingRaw / compScale)
     const completionsTotal = Math.floor(completionsTotalRaw / compScale)
@@ -65,13 +62,11 @@ export function toCopilotQuotaFromInternal(data: CopilotInternalUserResponse): C
     }
   }
 
-  // Handle standard format (unlimited/pro+)
   if (data.quota_snapshots?.premium_interactions) {
     const premium = data.quota_snapshots.premium_interactions
     const totalRaw = premium.unlimited ? -1 : premium.entitlement
     const remainingRaw = premium.remaining
     
-    // Auto-detect if we need to scale by 10
     const scaleFactor = totalRaw === 500 ? 10 : 1
     const chatRemaining = totalRaw === -1 ? -1 : Math.floor(remainingRaw / scaleFactor)
     const chatTotal = totalRaw === -1 ? -1 : Math.floor(totalRaw / scaleFactor)

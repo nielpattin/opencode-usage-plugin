@@ -16,16 +16,9 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
  * Usage Plugin Configuration
  */
 {
-  // Proxy endpoint (e.g. http://localhost:8000)
   "endpoint": "",
-
-  // API key for authentication
   "apiKey": "",
-
-  // Request timeout in milliseconds
   "timeout": 10000,
-
-  // Provider visibility
   "providers": {
     "openai": true,
     "proxy": true,
@@ -48,12 +41,10 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
 
   try {
     const content = await file.text()
-    // Remove comments first (both // and /* */)
     const withoutComments = content.replace(
       /(\".*?\"|\'.*?\')|(\/\/.*|\/\*[\s\S]*?\*\/)/g,
       (m, g1) => g1 ?? ""
     )
-    // Remove trailing commas before closing brackets/braces
     const cleanJson = withoutComments.replace(/,(\s*[}\]])/g, "$1")
     const config = JSON.parse(cleanJson) as UsageConfig
 

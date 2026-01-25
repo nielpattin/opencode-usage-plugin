@@ -16,7 +16,6 @@ const GROUP_MAPPING: Record<string, string> = {
   "25-lite": "25-lite"
 }
 
-// Display name ordering priority
 const GROUP_ORDER: string[] = ["claude", "g3-pro", "g3-flash", "25-flash", "25-lite"]
 
 function sortGroupNames(groups: Map<string, GroupQuota>): string[] {
@@ -79,11 +78,9 @@ function aggregateCredentialsByTier(credentials: CredentialData[]): Record<"paid
       if (!(name in GROUP_MAPPING)) continue
       const mappedName = GROUP_MAPPING[name]!
 
-      // Find the best window from group_usage
       const windows = groupData.windows || {}
       let bestWindow: { limit?: number; remaining: number; reset_at?: number | null } | null = null
 
-      // Priority order for windows
       const windowPriority = ["daily", "5h", "1h", "15m"]
       for (const windowName of windowPriority) {
         if (windows[windowName]) {
@@ -92,7 +89,6 @@ function aggregateCredentialsByTier(credentials: CredentialData[]): Record<"paid
         }
       }
 
-      // Fallback to any available window
       if (!bestWindow && Object.keys(windows).length > 0) {
         bestWindow = Object.values(windows)[0]
       }

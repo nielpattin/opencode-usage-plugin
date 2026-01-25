@@ -104,7 +104,6 @@ export const CopilotProvider: UsageProvider<void> = {
           quota = toCopilotQuotaFromInternal(data)
         }
       } catch {
-        // Ignore
       }
     }
 
