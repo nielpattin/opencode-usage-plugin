@@ -76,6 +76,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   }
 
   await Promise.race([Promise.all(fetches), timeout(5000)])
+  console.error(`[UsagePlugin] Fetched ${snapshots.length} snapshots: ${snapshots.map(s => s.provider).join(', ')}`)
   return snapshots
 }
 
