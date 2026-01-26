@@ -43,7 +43,7 @@ function sortQuotaGroups(groups: ProxyQuotaGroup[]): ProxyQuotaGroup[] {
  * Resolve the display name for a model group based on config.
  * Returns null if the group should be filtered out.
  */
-function resolveDisplayName(
+export function resolveDisplayName(
   groupName: string,
   config: UsageConfig | null,
 ): string | null {
