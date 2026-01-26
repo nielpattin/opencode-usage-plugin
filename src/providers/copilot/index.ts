@@ -112,6 +112,7 @@ export const CopilotProvider: UsageProvider<void> = {
             quota = toCopilotQuotaFromInternal(data)
           }
         } catch {
+          // Silent fallback if individual auth/internal API is unavailable
         }
       }
     }

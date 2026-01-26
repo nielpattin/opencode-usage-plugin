@@ -6,6 +6,7 @@ import { join } from "path"
 import { homedir } from "os"
 import type { UsageConfig } from "../types.js"
 import { readGitHubCliToken } from "../providers/copilot/auth.js"
+import type { CopilotEnterpriseAuth } from "../providers/copilot/enterprise.js"
 
 const CONFIG_PATH = join(homedir(), ".config", "opencode", "usage-config.jsonc")
 
@@ -68,11 +69,7 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
   }
 }
 
-export async function loadCopilotEnterpriseConfig(): Promise<{
-  enterprise?: string
-  organization?: string
-  token: string
-} | null> {
+export async function loadCopilotEnterpriseConfig(): Promise<CopilotEnterpriseAuth | null> {
   const config = await loadUsageConfig()
 
   if (!config.copilotEnterprise) {

@@ -14,74 +14,33 @@ import type { CopilotQuota } from "../../types.js"
 const GITHUB_API_BASE_URL = "https://api.github.com"
 const API_VERSION = "2022-11-28"
 
-interface EnterpriseMetricsResponse {
+interface MetricsReportResponse {
   download_links: string[]
   report_start_day: string
   report_end_day: string
 }
 
-interface OrganizationMetricsResponse {
-  download_links: string[]
-  report_start_day: string
-  report_end_day: string
+interface BaseMetricsEntry {
+  date: string
+  total_active_users: number
+  total_engaged_users: number
+  total_lines_suggested: number
+  total_lines_accepted: number
+  total_suggestions_count: number
+  total_acceptances_count: number
+  completions_count: number
+  chat_conversations_count: number
+  chat_acceptances_count: number
+  premium_interactions_count?: number
+  total_premium_requests?: number
 }
 
-interface EnterpriseMetricsEntry {
-  /** Enterprise slug */
+interface EnterpriseMetricsEntry extends BaseMetricsEntry {
   enterprise_id: string
-  /** Date in YYYY-MM-DD format */
-  date: string
-  /** Total number of active users */
-  total_active_users: number
-  /** Total number of engaged users */
-  total_engaged_users: number
-  /** Total lines of code suggested */
-  total_lines_suggested: number
-  /** Total lines of code accepted */
-  total_lines_accepted: number
-  /** Number of code suggestions */
-  total_suggestions_count: number
-  /** Number of accepted suggestions */
-  total_acceptances_count: number
-  /** Number of completions */
-  completions_count: number
-  /** Number of chat conversations */
-  chat_conversations_count: number
-  /** Number of chat acceptances */
-  chat_acceptances_count: number
-  /** Number of premium interactions */
-  premium_interactions_count?: number
-  /** Total number of premium requests */
-  total_premium_requests?: number
 }
 
-interface OrganizationMetricsEntry {
-  /** Organization ID */
+interface OrganizationMetricsEntry extends BaseMetricsEntry {
   organization_id: string
-  /** Date in YYYY-MM-DD format */
-  date: string
-  /** Total number of active users */
-  total_active_users: number
-  /** Total number of engaged users */
-  total_engaged_users: number
-  /** Total lines of code suggested */
-  total_lines_suggested: number
-  /** Total lines of code accepted */
-  total_lines_accepted: number
-  /** Number of code suggestions */
-  total_suggestions_count: number
-  /** Number of accepted suggestions */
-  total_acceptances_count: number
-  /** Number of completions */
-  completions_count: number
-  /** Number of chat conversations */
-  chat_conversations_count: number
-  /** Number of chat acceptances */
-  chat_acceptances_count: number
-  /** Number of premium interactions */
-  premium_interactions_count?: number
-  /** Total number of premium requests */
-  total_premium_requests?: number
 }
 
 const REQUEST_TIMEOUT_MS = 10000
@@ -104,16 +63,10 @@ async function fetchWithTimeout(
   }
 }
 
-/**
- * Fetch and parse the latest 28-day enterprise metrics report.
- * Aggregates data across all days to compute total usage.
- */
-async function fetchEnterpriseMetrics(
-  enterprise: string,
+async function fetchMetricsReport<T extends BaseMetricsEntry>(
+  url: string,
   authToken: string,
-): Promise<EnterpriseMetricsEntry[] | null> {
-  const url = `${GITHUB_API_BASE_URL}/enterprises/${enterprise}/copilot/metrics/reports/enterprise-28-day/latest`
-
+): Promise<T[] | null> {
   try {
     const response = await fetchWithTimeout(
       url,
@@ -131,9 +84,8 @@ async function fetchEnterpriseMetrics(
       return null
     }
 
-    const data = (await response.json()) as EnterpriseMetricsResponse
+    const data = (await response.json()) as MetricsReportResponse
 
-    // Fetch the first report link (NDJSON format)
     if (!data.download_links || data.download_links.length === 0) {
       return null
     }
@@ -152,15 +104,23 @@ async function fetchEnterpriseMetrics(
       .filter((line) => line.trim().length > 0)
       .map((line) => {
         try {
-          return JSON.parse(line) as EnterpriseMetricsEntry
+          return JSON.parse(line) as T
         } catch {
           return null
         }
       })
-      .filter((entry): entry is EnterpriseMetricsEntry => entry !== null)
+      .filter((entry): entry is T => entry !== null)
   } catch {
     return null
   }
+}
+
+async function fetchEnterpriseMetrics(
+  enterprise: string,
+  authToken: string,
+): Promise<EnterpriseMetricsEntry[] | null> {
+  const url = `${GITHUB_API_BASE_URL}/enterprises/${enterprise}/copilot/metrics/reports/enterprise-28-day/latest`
+  return fetchMetricsReport<EnterpriseMetricsEntry>(url, authToken)
 }
 
 /**
@@ -172,54 +132,7 @@ async function fetchOrganizationMetrics(
   authToken: string,
 ): Promise<OrganizationMetricsEntry[] | null> {
   const url = `${GITHUB_API_BASE_URL}/orgs/${organization}/copilot/metrics/reports/organization-28-day/latest`
-
-  try {
-    const response = await fetchWithTimeout(
-      url,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${authToken}`,
-          "X-GitHub-Api-Version": API_VERSION,
-        },
-      },
-      REQUEST_TIMEOUT_MS,
-    )
-
-    if (!response.ok) {
-      return null
-    }
-
-    const data = (await response.json()) as OrganizationMetricsResponse
-
-    // Fetch the first report link (NDJSON format)
-    if (!data.download_links || data.download_links.length === 0) {
-      return null
-    }
-
-    const reportUrl = data.download_links[0]
-    const reportResponse = await fetchWithTimeout(reportUrl, {}, REQUEST_TIMEOUT_MS)
-
-    if (!reportResponse.ok) {
-      return null
-    }
-
-    const reportText = await reportResponse.text()
-    const lines = reportText.trim().split("\n")
-
-    return lines
-      .filter((line) => line.trim().length > 0)
-      .map((line) => {
-        try {
-          return JSON.parse(line) as OrganizationMetricsEntry
-        } catch {
-          return null
-        }
-      })
-      .filter((entry): entry is OrganizationMetricsEntry => entry !== null)
-  } catch {
-    return null
-  }
+  return fetchMetricsReport<OrganizationMetricsEntry>(url, authToken)
 }
 
 /**
@@ -236,26 +149,22 @@ function toCopilotQuotaFromMetrics(
     return null
   }
 
-  // Aggregate total premium requests across all days
-  const totalPremiumRequests = entries.reduce((sum, entry) => {
-    return sum + (entry.total_premium_requests || entry.premium_interactions_count || 0)
+  const sortedEntries = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  const totalPremiumRequests = sortedEntries.reduce((sum, entry) => {
+    return sum + (entry.total_premium_requests ?? entry.premium_interactions_count ?? 0)
   }, 0)
 
-  // Get the most recent date for reset time calculation
-  const mostRecentEntry = entries[entries.length - 1]
+  const mostRecentEntry = sortedEntries[sortedEntries.length - 1]
   const lastDay = new Date(mostRecentEntry.date)
-
-  // Estimate monthly reset (1st of next month)
   const resetTime = new Date(Date.UTC(lastDay.getUTCFullYear(), lastDay.getUTCMonth() + 1, 1)).toISOString()
 
-  // For enterprise, we don't have a clear "total quota" from the metrics API
-  // We use -1 to indicate unlimited/unknown quota
   return {
-    used: totalPremiumRequests,
-    total: -1, // Enterprise quotas are managed at the org level
-    percentRemaining: 0, // Cannot determine without quota info
+    used: 0,
+    total: -1, // No known max limit; tracking usage only until enterprise validation
+    percentRemaining: 0,
     resetTime,
-    completionsUsed: entries.reduce((sum, e) => sum + (e.completions_count || 0), 0),
+    completionsUsed: sortedEntries.reduce((sum, e) => e.completions_count ?? 0, 0),
     completionsTotal: -1,
   }
 }
