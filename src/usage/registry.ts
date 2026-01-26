@@ -3,6 +3,7 @@
  */
 
 import type { CodexAuth } from "../providers/codex"
+import type { CopilotAuthData } from "../providers/copilot/types"
 
 export type AuthEntry = {
   type?: string
@@ -16,6 +17,7 @@ export type AuthRecord = Record<string, AuthEntry>
 
 type ProviderAuthEntry =
   | { providerID: "codex"; auth: CodexAuth }
+  | { providerID: "copilot"; auth: CopilotAuthData }
 
 type ProviderDescriptor = {
   id: ProviderAuthEntry["providerID"]
@@ -32,6 +34,15 @@ const providerDescriptors: ProviderDescriptor[] = [
     buildAuth: (entry) => ({
       access: entry.access,
       accountId: entry.accountId,
+    }),
+  },
+  {
+    id: "copilot",
+    authKeys: ["copilot", "github-copilot"],
+    requiresOAuth: true,
+    buildAuth: (entry) => ({
+      access: entry.access,
+      refresh: entry.refresh,
     }),
   },
 ]
