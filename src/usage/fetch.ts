@@ -79,7 +79,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
 
   const specialProviders = ["proxy", "copilot"]
   for (const id of specialProviders) {
-    if ((!targetProvider || targetProvider === id) && isProviderEnabled(id)) {
+    if ((!targetProvider || targetProvider === id) && isProviderEnabled(id) && !fetchedProviders.has(id)) {
       const provider = providers[id]
       if (provider?.fetchUsage) {
         fetches.push(
