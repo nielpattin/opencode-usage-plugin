@@ -148,7 +148,7 @@ function parseProxyQuota(data: ProxyResponse): ProxyQuota {
   }
 }
 
-export const ProxyProvider: UsageProvider = {
+export const ProxyProvider: UsageProvider<void> = {
   id: "proxy",
   displayName: "Mirrowel Proxy",
 
@@ -158,7 +158,7 @@ export const ProxyProvider: UsageProvider = {
       const data = await fetchProxyLimits(config)
 
       return {
-        timestamp: data.timestamp * 1000,
+        timestamp: (data.timestamp || Date.now() / 1000) * 1000,
         provider: "proxy",
         planType: null,
         primary: null,

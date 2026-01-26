@@ -88,6 +88,7 @@ export interface UsageSnapshot {
   proxyQuota?: ProxyQuota
   copilotQuota?: CopilotQuota
   updatedAt: number
+  isMissing?: boolean
 }
 
 export interface UsageEntry {

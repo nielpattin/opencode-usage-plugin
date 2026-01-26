@@ -3,19 +3,29 @@
  */
 
 import { join } from "path"
-import { homedir } from "os"
+import { homedir, platform } from "os"
 import type { UsageConfig } from "../types"
 
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "usage-config.jsonc")
+function getConfigPath(): string {
+  const plat = platform()
+  const home = homedir()
+
+  if (plat === "win32") {
+    return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "opencode", "usage-config.jsonc")
+  }
+
+  // For macOS, Linux, and other Unix-like systems, use XDG_CONFIG_HOME or default to ~/.config
+  const configHome = process.env.XDG_CONFIG_HOME || join(home, ".config")
+  return join(configHome, "opencode", "usage-config.jsonc")
+}
+
+const CONFIG_PATH = getConfigPath()
 
 export async function loadUsageConfig(): Promise<UsageConfig> {
   const file = Bun.file(CONFIG_PATH)
 
   if (!(await file.exists())) {
-    const content = `/**
- * Usage Plugin Configuration
- */
-{
+    const content = `{
   "endpoint": "",
   "apiKey": "",
   "timeout": 10000,
