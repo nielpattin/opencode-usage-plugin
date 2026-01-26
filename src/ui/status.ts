@@ -3,6 +3,8 @@
  */
 
 import type { PluginInput } from "@opencode-ai/plugin"
+import { platform, homedir } from "os"
+import { join } from "path"
 import type { UsageSnapshot } from "../types"
 import type { UsageState } from "../state"
 
@@ -145,7 +147,42 @@ function formatCopilotSnapshot(snapshot: UsageSnapshot): string[] {
   return lines
 }
 
+function getAppDataPath(): string {
+  const home = homedir()
+  const plat = platform()
+  if (plat === "darwin") return join(home, ".config", "opencode")
+  if (plat === "win32") return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "opencode")
+  return join(process.env.XDG_CONFIG_HOME || join(home, ".config"), "opencode")
+}
+
+function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
+  const provider = snapshot.provider
+  const label = provider === "codex" ? "codex" : provider === "proxy" ? "proxy" : "gh"
+  const configPath = join(getAppDataPath(), "usage-config.jsonc")
+  
+  let providerInstruction = ""
+  if (provider === "codex") {
+    providerInstruction = "if you dont have codex oauth, please set your usage-config.jsonc to openai: false"
+  } else if (provider === "proxy") {
+    providerInstruction = "if you are not running Mirrowel's proxy, please set your usage-config.jsonc to proxy: false"
+  } else if (provider === "copilot") {
+    providerInstruction = "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false"
+  }
+
+  return [
+    `→ [${provider.toUpperCase()}] - ${providerInstruction}`,
+    "",
+    `The file can be found in ${configPath}. Please read the comments in the file or visit the repo for the readme.`,
+    "",
+    "If you are seeing empty usages or errors, despite having everything set up correctly, please fire an issue at https://github.com/IgorWarzocha/opencode-usage-plugin/issues - thank you!",
+  ]
+}
+
 function formatSnapshot(snapshot: UsageSnapshot): string[] {
+  if (snapshot.isMissing) {
+    return formatMissingSnapshot(snapshot)
+  }
+  
   if (snapshot.provider === "proxy" && snapshot.proxyQuota) {
     return formatProxySnapshot(snapshot)
   }

@@ -46,15 +46,20 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   const targetProvider = resolveProviderFilter(filter)
   const usageConfig = await loadUsageConfig().catch(() => null)
   const providerToggles = usageConfig?.providers ?? {}
+  
   const isProviderEnabled = (id: string): boolean => {
     if (id === "codex") return providerToggles.openai !== false
     if (id === "proxy") return providerToggles.proxy !== false
     if (id === "copilot") return providerToggles.copilot !== false
     return true
   }
+
   const auths = await loadAuths()
   const entries = resolveProviderAuths(auths, null)
   const snapshots: UsageSnapshot[] = []
+  
+  const coreProviders = ["codex", "proxy", "copilot"]
+  const fetchedProviders = new Set<string>()
 
   const fetches = entries
     .filter((entry) => !targetProvider || entry.providerID === targetProvider)
@@ -62,8 +67,15 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
     .map(async (entry) => {
       const provider = providers[entry.providerID]
       if (!provider?.fetchUsage) return
-      const snapshot = await provider.fetchUsage(entry.auth).catch(() => null)
-      if (snapshot) snapshots.push(snapshot)
+      try {
+        const snapshot = await provider.fetchUsage(entry.auth)
+        if (snapshot) {
+          snapshots.push(snapshot)
+          fetchedProviders.add(entry.providerID)
+        }
+      } catch {
+        // Handle error by letting fallback logic take over
+      }
     })
 
   const specialProviders = ["proxy", "copilot"]
@@ -75,7 +87,10 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
           provider
             .fetchUsage(undefined)
             .then((snapshot) => {
-              if (snapshot) snapshots.push(snapshot)
+              if (snapshot) {
+                snapshots.push(snapshot)
+                fetchedProviders.add(id)
+              }
             })
             .catch(() => {}),
         )
@@ -84,6 +99,26 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   }
 
   await Promise.race([Promise.all(fetches), timeout(5000)])
+
+  // Fallback for enabled but missing providers
+  for (const id of coreProviders) {
+    if (isProviderEnabled(id) && !fetchedProviders.has(id)) {
+      if (!targetProvider || targetProvider === id) {
+        snapshots.push({
+          timestamp: Date.now(),
+          provider: id,
+          planType: null,
+          primary: null,
+          secondary: null,
+          codeReview: null,
+          credits: null,
+          updatedAt: Date.now(),
+          isMissing: true,
+        })
+      }
+    }
+  }
+
   return snapshots
 }
 
