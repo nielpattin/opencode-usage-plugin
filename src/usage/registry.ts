@@ -44,7 +44,7 @@ export function resolveProviderAuths(auths: AuthRecord, usageToken: string | nul
     if (!matched) continue
     const auth = auths[matched]
     if (!auth) continue
-    if (descriptor.requiresOAuth && auth.type && auth.type !== "oauth") continue
+    if (descriptor.requiresOAuth && auth.type && auth.type !== "oauth" && auth.type !== "token") continue
     const built = descriptor.buildAuth(auth, usageToken)
     entries.push({ providerID: descriptor.id, auth: built } as ProviderAuthEntry)
   }
