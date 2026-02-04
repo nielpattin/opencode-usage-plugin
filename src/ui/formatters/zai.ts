@@ -21,7 +21,7 @@ export function formatZaiSnapshot(snapshot: UsageSnapshot): string[] {
       : " (resets on the 1st)"
     
     lines.push(`  ${label}`)
-    lines.push(`  ${formatBar(remainingPct)} ${remainingPct}% left${reset}`)
+    lines.push(`  ${formatBar(remainingPct)} ${remainingPct.toFixed(0)}% left${reset}`)
     
     const unit = isTokens ? "Tokens" : "Times"
     lines.push(`  Used: ${limit.currentValue.toLocaleString()} / ${limit.usage.toLocaleString()} ${unit}`)

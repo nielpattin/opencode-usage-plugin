@@ -51,7 +51,7 @@ export interface ZaiToolUsageResponse {
       totalWebReadMcpCount: number
       totalZreadMcpCount: number
       totalSearchMcpCount: number
-      toolDetails: any[]
+      toolDetails: unknown[]
     }
   }
   success: boolean
