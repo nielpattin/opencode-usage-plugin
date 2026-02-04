@@ -34,13 +34,13 @@ The plugin creates a default config file on first run at:
 
 ```jsonc
 {
-  // REQUIRED: Proxy server endpoint (e.g., "http://localhost:8000")
+  // REQUIRED: Proxy server endpoint (default: "http://localhost:8000")
   // Leave empty ONLY if you don't use the proxy
   "endpoint": "http://localhost:8000",
 
-  // REQUIRED: API key for proxy auth (if your proxy requires it)
+  // REQUIRED: API key for proxy auth (default: "VerysecretKey")
   // Leave empty if your proxy doesn't require authentication
-  "apiKey": "your-key-here",
+  "apiKey": "VerysecretKey",
 
   // Optional: Request timeout in milliseconds (default: 10000)
   "timeout": 10000,
@@ -54,7 +54,7 @@ The plugin creates a default config file on first run at:
 }
 ```
 
-> **⚠️ Important**: If using the Mirrowel Proxy, both `endpoint` and `apiKey` must be set. Empty values will cause proxy queries to fail.
+> **⚠️ Important**: If using the Mirrowel Proxy, both `endpoint` and `apiKey` must be set. The proxy defaults to `endpoint: http://localhost:8000` and `apiKey: VerysecretKey`. If you changed these during your proxy setup, you MUST update your config file to match.
 
 ### Copilot auth
 
@@ -98,8 +98,9 @@ Copilot is detected from either of these locations:
 
 **Proxy shows "not configured" error**
 - Ensure `endpoint` and `apiKey` are set in `usage-config.jsonc`
+- Default values: `endpoint: http://localhost:8000`, `apiKey: VerysecretKey`
+- If you changed these during proxy setup, update your config file to match
 - Verify your proxy is running at the specified endpoint
-- Check that the API key matches your proxy credentials
 
 **Missing provider data**
 - Use `providers: { ... }` in config to disable unused providers
