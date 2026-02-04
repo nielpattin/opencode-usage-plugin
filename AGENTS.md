@@ -40,10 +40,11 @@ interface UsageConfig {
 ```
 
 ## Hook System
-`index.ts` wires three hook types from `src/hooks/`:
-- `command.execute.before` - Intercepts commands via `src/hooks/command.ts`.
-- `session.start` / `session.end` - Tracks per-session usage via `src/hooks/session.ts`.
-- `proxy.response` - Intercepts HTTP responses for rate-limit headers via `src/hooks/proxy.ts`.
+`index.ts` wires hook types from `src/hooks/`:
+- `config` - Registers `/usage` command via `src/hooks/command.ts`.
+- `command.execute.before` - Intercepts `/usage` command via `src/hooks/command.ts`.
+- `chat.params` - Captures active session/model context via `src/hooks/session.ts`.
+- `experimental.text.complete` - Manages silent responses via `src/hooks/proxy.ts`.
 
 ## Safety & Constraints
 - MUST NOT run long-running/blocking processes (e.g., dev servers).
