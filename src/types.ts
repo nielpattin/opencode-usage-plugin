@@ -92,6 +92,9 @@ export interface UsageSnapshot {
   proxyQuota?: ProxyQuota
   copilotQuota?: CopilotQuota
   updatedAt: number
+  isMissing?: boolean
+  missingReason?: string
+  missingDetails?: string[]
 }
 
 export interface UsageEntry {

@@ -9,7 +9,7 @@ export async function fetchProxyLimits(config: UsageConfig): Promise<ProxyRespon
   const { endpoint, apiKey, timeout = 10000 } = config
 
   if (!endpoint) {
-    throw new Error("Proxy endpoint not configured")
+    throw new Error("Proxy endpoint not configured. Set 'endpoint' in ~/.config/opencode/usage-config.jsonc (Windows: %APPDATA%\\opencode\\usage-config.jsonc)\n\nDefault: http://localhost:8000\nIf you changed this during proxy setup, update your config.")
   }
 
   const headers: Record<string, string> = {
@@ -34,7 +34,7 @@ export async function fetchProxyLimits(config: UsageConfig): Promise<ProxyRespon
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      throw new Error(`Proxy request failed: HTTP ${response.status}. Check your usage-config.jsonc:\n\n  - Default endpoint: http://localhost:8000\n  - Default apiKey: VerysecretKey\n\nIf you changed these during proxy setup, you MUST update your config file to match.`)
     }
 
     return (await response.json()) as ProxyResponse

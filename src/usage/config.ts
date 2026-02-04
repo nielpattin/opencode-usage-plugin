@@ -3,22 +3,41 @@
  */
 
 import { join } from "path"
-import { homedir } from "os"
+import { homedir, platform } from "os"
 import type { UsageConfig } from "../types"
 
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "usage-config.jsonc")
+function getConfigPath(): string {
+  const plat = platform()
+  const home = homedir()
+
+  if (plat === "win32") {
+    return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "opencode", "usage-config.jsonc")
+  }
+
+  // For macOS, Linux, and other Unix-like systems, use XDG_CONFIG_HOME or default to ~/.config
+  const configHome = process.env.XDG_CONFIG_HOME || join(home, ".config")
+  return join(configHome, "opencode", "usage-config.jsonc")
+}
+
+const CONFIG_PATH = getConfigPath()
 
 export async function loadUsageConfig(): Promise<UsageConfig> {
   const file = Bun.file(CONFIG_PATH)
 
   if (!(await file.exists())) {
-    const content = `/**
- * Usage Plugin Configuration
- */
-{
-  "endpoint": "",
-  "apiKey": "",
+    const content = `{
+  // REQUIRED: Proxy server endpoint (default: "http://localhost:8000")
+  // Leave empty ONLY if you don't use the proxy
+  "endpoint": "http://localhost:8000",
+
+  // REQUIRED: API key for proxy auth (default: "VerysecretKey")
+  // Leave empty if your proxy doesn't require authentication
+  "apiKey": "VerysecretKey",
+
+  // Optional: Request timeout in milliseconds (default: 10000)
   "timeout": 10000,
+
+  // Optional: Show/hide providers in /usage output
   "providers": {
     "openai": true,
     "proxy": true,
