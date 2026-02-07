@@ -41,8 +41,8 @@ export type GroupUsageWindow = {
 }
 
 export type GroupUsage = {
-  windows: GroupUsageWindow
-  totals: TokenStats
+  windows?: GroupUsageWindow
+  totals?: TokenStats
   fair_cycle_exhausted?: boolean
   fair_cycle_reason?: string | null
   cooldown_remaining?: number | null
@@ -50,10 +50,19 @@ export type GroupUsage = {
   custom_cap?: number | null
 }
 
+/** New style group usage in credentials */
+export type ModelGroupUsage = {
+  requests_max: number
+  requests_remaining: number
+  remaining_pct: number
+  reset_time_iso: string | null
+  models?: string[]
+}
+
 /** Model usage information */
 export type ModelUsage = {
-  windows: GroupUsageWindow
-  totals: TokenStats
+  windows?: GroupUsageWindow
+  totals?: TokenStats
 }
 
 /** Tier availability info */
@@ -76,6 +85,7 @@ export type GroupTiers = {
   [tierName: string]: {
     priority: number
     total: number
+    active?: number
   }
 }
 
@@ -87,34 +97,42 @@ export type FairCycleSummary = {
 
 /** Model group aggregation */
 export type ModelGroupAggregation = {
-  tiers: GroupTiers
-  windows: {
+  tiers?: GroupTiers
+  windows?: {
     [windowName: string]: TierWindow
   }
-  fair_cycle_summary: FairCycleSummary
+  fair_cycle_summary?: FairCycleSummary
+  // New style aggregation fields
+  total_requests_max?: number
+  total_requests_remaining?: number
+  total_remaining_pct?: number
+  models?: string[]
 }
 
 /** Credential information from new API */
 export type CredentialData = {
-  stable_id: string
+  stable_id?: string
   accessor_masked?: string
-  full_path: string
+  full_path?: string
   identifier: string
   email?: string | null
   tier?: string
   priority?: number
   active_requests?: number
   status: string
-  totals: TokenStats
+  totals?: TokenStats
+  tokens?: TokenStats // New style
   model_usage?: Record<string, ModelUsage>
   group_usage?: Record<string, GroupUsage>
+  model_groups?: Record<string, ModelGroupUsage> // New style
   last_used_at?: number
   first_used_at?: number
+  last_used_ts?: number
 }
 
 /** Provider information from new API */
 export type Provider = {
-  provider: string
+  provider?: string
   credential_count: number
   rotation_mode?: string
   credentials: Record<string, CredentialData>

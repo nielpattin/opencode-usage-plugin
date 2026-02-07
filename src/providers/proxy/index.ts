@@ -7,7 +7,7 @@ import type { UsageProvider } from "../base"
 import type { UsageSnapshot, ProxyQuota, ProxyProviderInfo, ProxyQuotaGroup, ProxyTierInfo, UsageConfig } from "../../types"
 import { loadUsageConfig } from "../../usage/config"
 import { fetchProxyLimits } from "./fetch"
-import type { ProxyResponse, Provider, GroupUsage, ModelGroupAggregation } from "./types"
+import type { ProxyResponse, Provider, GroupUsage, ModelGroupAggregation, CredentialData, ModelGroupUsage } from "./types"
 
 export type { ProxyResponse } from "./types"
 export { fetchProxyLimits } from "./fetch"
@@ -90,6 +90,23 @@ function parseQuotaGroupsFromAggregation(
     const displayName = resolveDisplayName(groupName, config)
     if (displayName === null) continue
 
+    // Handle new style aggregate (direct fields)
+    if (groupData.total_requests_remaining !== undefined) {
+      const max = groupData.total_requests_max ?? groupData.total_requests_remaining
+      const remaining = groupData.total_requests_remaining
+      const remainingPct = groupData.total_remaining_pct ?? (max > 0 ? Math.round((remaining / max) * 100) : 0)
+
+      tiers.paid.set(displayName, {
+        name: displayName,
+        remaining,
+        max,
+        remainingPct,
+        resetTime: null,
+      })
+      continue
+    }
+
+    // Handle old style (windows object)
     const windows = groupData.windows || {}
     const windowPriority = ["daily", "5h", "1h", "15m"]
     
@@ -108,9 +125,6 @@ function parseQuotaGroupsFromAggregation(
     if (!bestWindowName) continue
     const window = windows[bestWindowName]
 
-    // Since these are already aggregated by provider, we split by tier if possible.
-    // However, the aggregate API provides tier-agnostic totals. 
-    // For now, we put them into "paid" as the default high-level view.
     const max = window.total_max ?? window.total_remaining
     const remaining = window.total_remaining
     const remainingPct =
@@ -125,7 +139,7 @@ function parseQuotaGroupsFromAggregation(
       remaining,
       max,
       remainingPct,
-      resetTime: null, // Aggregated windows don't have a single reset_at
+      resetTime: null,
     })
   }
 
@@ -137,42 +151,59 @@ function parseQuotaGroupsFromAggregation(
 }
 
 function parseQuotaGroupsFromCredential(
-  groupUsage: Record<string, GroupUsage> | undefined,
+  cred: CredentialData,
   config: UsageConfig | null,
 ): ProxyQuotaGroup[] {
-  if (!groupUsage) return []
-
   const result: Map<string, ProxyQuotaGroup> = new Map()
 
-  for (const [groupName, groupData] of Object.entries(groupUsage)) {
-    // Apply config-based filtering and display name resolution
-    const displayName = resolveDisplayName(groupName, config)
-    if (displayName === null) continue
+  // Handle new style model_groups
+  if (cred.model_groups) {
+    for (const [groupName, groupData] of Object.entries(cred.model_groups)) {
+      const displayName = resolveDisplayName(groupName, config)
+      if (displayName === null) continue
 
-    const windows = groupData.windows || {}
-    let bestWindow: { limit?: number; remaining: number; reset_at?: number | null } | null = null
+      result.set(displayName, {
+        name: displayName,
+        remaining: groupData.requests_remaining,
+        max: groupData.requests_max,
+        remainingPct: groupData.remaining_pct,
+        resetTime: groupData.reset_time_iso,
+      })
+    }
+  }
 
-    const windowPriority = ["daily", "5h", "1h", "15m"]
-    for (const windowName of windowPriority) {
-      if (windows[windowName]) {
-        bestWindow = windows[windowName]
-        break
+  // Handle old style group_usage
+  if (cred.group_usage) {
+    for (const [groupName, groupData] of Object.entries(cred.group_usage)) {
+      const displayName = resolveDisplayName(groupName, config)
+      if (displayName === null) continue
+      if (result.has(displayName)) continue
+
+      const windows = groupData.windows || {}
+      let bestWindow: { limit?: number; remaining: number; reset_at?: number | null } | null = null
+
+      const windowPriority = ["daily", "5h", "1h", "15m"]
+      for (const windowName of windowPriority) {
+        if (windows[windowName]) {
+          bestWindow = windows[windowName]
+          break
+        }
       }
+
+      if (!bestWindow && Object.keys(windows).length > 0) {
+        bestWindow = Object.values(windows)[0]
+      }
+
+      if (!bestWindow) continue
+
+      result.set(displayName, {
+        name: displayName,
+        remaining: bestWindow.remaining,
+        max: bestWindow.limit || bestWindow.remaining,
+        remainingPct: bestWindow.limit ? Math.round((bestWindow.remaining / bestWindow.limit) * 100) : 0,
+        resetTime: bestWindow.reset_at ? new Date(bestWindow.reset_at * 1000).toISOString() : null,
+      })
     }
-
-    if (!bestWindow && Object.keys(windows).length > 0) {
-      bestWindow = Object.values(windows)[0]
-    }
-
-    if (!bestWindow) continue
-
-    result.set(displayName, {
-      name: displayName,
-      remaining: bestWindow.remaining,
-      max: bestWindow.limit || bestWindow.remaining,
-      remainingPct: bestWindow.limit ? Math.round((bestWindow.remaining / bestWindow.limit) * 100) : 0,
-      resetTime: bestWindow.reset_at ? new Date(bestWindow.reset_at * 1000).toISOString() : null,
-    })
   }
 
   return Array.from(result.values())
@@ -181,7 +212,8 @@ function parseQuotaGroupsFromCredential(
 function aggregateByProvider(provider: Provider, config: UsageConfig | null): ProxyTierInfo[] {
   // Try aggregated quota groups first
   if (provider.quota_groups && Object.keys(provider.quota_groups).length > 0) {
-    return parseQuotaGroupsFromAggregation(provider.quota_groups, config)
+    const agg = parseQuotaGroupsFromAggregation(provider.quota_groups, config)
+    if (agg.length > 0) return agg
   }
 
   // Fallback to manual aggregation of credentials
@@ -193,7 +225,7 @@ function aggregateByProvider(provider: Provider, config: UsageConfig | null): Pr
   if (provider.credentials) {
     for (const cred of Object.values(provider.credentials)) {
       const tier = normalizeTier(cred.tier)
-      const groups = parseQuotaGroupsFromCredential(cred.group_usage, config)
+      const groups = parseQuotaGroupsFromCredential(cred, config)
 
       for (const group of groups) {
         const existing = tiers[tier].get(group.name)
