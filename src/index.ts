@@ -16,6 +16,7 @@ export const UsagePlugin: Plugin = async ({ client }) => {
     const usageConfig = await loadUsageConfig().catch(() => ({} as UsageConfig))
 
     state.availableProviders.codex = usageConfig?.providers?.openai !== false
+    state.availableProviders.anthropic = usageConfig?.providers?.anthropic !== false
     state.availableProviders.proxy = usageConfig?.providers?.proxy !== false
     state.availableProviders.copilot = usageConfig?.providers?.copilot !== false
   } catch (err) {}

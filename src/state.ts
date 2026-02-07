@@ -9,6 +9,7 @@ export type UsageState = {
   model?: { providerID: string; modelID: string }
   availableProviders: {
     codex: boolean
+    anthropic: boolean
     proxy: boolean
     copilot: boolean
   }
@@ -19,6 +20,7 @@ export function createUsageState(): UsageState {
     sessionID: null,
     availableProviders: {
       codex: false,
+      anthropic: false,
       proxy: false,
       copilot: false,
     },

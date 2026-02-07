@@ -54,6 +54,7 @@ export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
   const { provider } = snapshot
   const configPath = getConfigPath()
   const instructions: Record<string, string> = {
+    anthropic: "if Anthropic usage is unavailable, re-login with Anthropic OAuth and ensure oauth headers are enabled.",
     codex: "if you dont have codex oauth, please set your usage-config.jsonc to openai: false",
     proxy: "check your usage-config.jsonc. Default: endpoint http://localhost:8000, apiKey VerysecretKey. If you changed these during proxy setup, update your config to match. Or set proxy: false to disable.",
     copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false"

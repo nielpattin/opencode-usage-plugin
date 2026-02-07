@@ -43,6 +43,7 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
   // Optional: Show/hide providers in /usage output
   "providers": {
     "openai": true,
+    "anthropic": true,
     "proxy": true,
     "copilot": true,
     "zai": true
@@ -57,6 +58,7 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
       timeout: 10000,
       providers: {
         openai: true,
+        anthropic: true,
         proxy: true,
         copilot: true,
         zai: true,

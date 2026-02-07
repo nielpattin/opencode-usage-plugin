@@ -6,6 +6,7 @@
 import type { PluginInput } from "@opencode-ai/plugin"
 import type { UsageSnapshot } from "../types"
 import type { UsageState } from "../state"
+import { formatAnthropicSnapshot } from "./formatters/anthropic"
 import { formatProxySnapshot } from "./formatters/proxy"
 import { formatCopilotSnapshot } from "./formatters/copilot"
 import { formatZaiSnapshot } from "./formatters/zai"
@@ -41,6 +42,7 @@ export async function sendStatusMessage(options: {
 
 function formatSnapshot(snapshot: UsageSnapshot): string[] {
   if (snapshot.isMissing) return formatMissingSnapshot(snapshot)
+  if (snapshot.provider === "anthropic") return formatAnthropicSnapshot(snapshot)
   if (snapshot.provider === "proxy") return formatProxySnapshot(snapshot)
   if (snapshot.provider === "copilot") return formatCopilotSnapshot(snapshot)
   if (snapshot.provider === "zai-coding-plan") return formatZaiSnapshot(snapshot)
