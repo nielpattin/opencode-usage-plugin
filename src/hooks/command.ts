@@ -60,6 +60,7 @@ export function commandHooks(options: {
         if (s.provider === "codex") return options.state.availableProviders.codex
         if (s.provider === "proxy") return options.state.availableProviders.proxy
         if (s.provider === "copilot") return options.state.availableProviders.copilot
+        if (s.provider === "anthropic") return options.state.availableProviders.anthropic
         return true
       })
 

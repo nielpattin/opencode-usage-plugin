@@ -56,7 +56,8 @@ export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
   const instructions: Record<string, string> = {
     codex: "if you dont have codex oauth, please set your usage-config.jsonc to openai: false",
     proxy: "check your usage-config.jsonc. Default: endpoint http://localhost:8000, apiKey VerysecretKey. If you changed these during proxy setup, update your config to match. Or set proxy: false to disable.",
-    copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false"
+    copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false",
+    anthropic: "Anthropic OAuth token not found. Ensure you have logged into Claude Code (claude login) and an 'anthropic' entry exists in auth.json with a valid sk-ant-oat01-* access token. Or set anthropic: false in usage-config.jsonc to disable."
   }
 
   const lines = [`→ [${provider.toUpperCase()}] - ${instructions[provider] || ""}`]

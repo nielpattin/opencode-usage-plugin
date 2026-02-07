@@ -76,6 +76,7 @@ export interface UsageConfig {
     proxy?: boolean
     copilot?: boolean
     zai?: boolean
+    anthropic?: boolean
   }
   modelGroups?: {
     showAll?: boolean
@@ -104,6 +105,33 @@ export interface ZaiQuota {
   }
 }
 
+export interface AnthropicUsageWindow {
+  utilization: number
+  resetsAt: string | null
+}
+
+export interface AnthropicExtraUsageInfo {
+  isEnabled: boolean
+  monthlyLimit: number | null
+  usedCredits: number | null
+  utilization: number | null
+}
+
+export interface AnthropicQuota {
+  fiveHour: AnthropicUsageWindow | null
+  sevenDay: AnthropicUsageWindow | null
+  sevenDayOAuthApps: AnthropicUsageWindow | null
+  sevenDayOpus: AnthropicUsageWindow | null
+  sevenDaySonnet: AnthropicUsageWindow | null
+  sevenDayCowork: AnthropicUsageWindow | null
+  iguanaNecktie: AnthropicUsageWindow | null
+  extraUsage: AnthropicExtraUsageInfo | null
+  planTier: string
+  organizationType: string | null
+  subscriptionStatus: string | null
+  accountEmail: string | null
+}
+
 export interface UsageSnapshot {
   timestamp: number
   provider: string
@@ -115,6 +143,7 @@ export interface UsageSnapshot {
   proxyQuota?: ProxyQuota
   copilotQuota?: CopilotQuota
   zaiQuota?: ZaiQuota
+  anthropicQuota?: AnthropicQuota
   updatedAt: number
   isMissing?: boolean
   missingReason?: string
