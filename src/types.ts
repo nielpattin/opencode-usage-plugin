@@ -74,13 +74,14 @@ export interface UsageConfig {
   apiKey?: string
   zaiEndpoint?: string
   timeout?: number
-    providers?: {
-      openai?: boolean
-      proxy?: boolean
-      copilot?: boolean
-      zai?: boolean
-      anthropic?: boolean
-    }
+  providers?: {
+    openai?: boolean
+    proxy?: boolean
+    copilot?: boolean
+    zai?: boolean
+    openrouter?: boolean
+    anthropic?: boolean
+  }
   modelGroups?: {
     showAll?: boolean
     displayNames?: Record<string, string>
@@ -130,6 +131,16 @@ export interface AnthropicQuota {
   } | null
 }
 
+export interface OpenRouterQuota {
+  limit: number | null
+  usage: number
+  limitRemaining: number | null
+  usageDaily: number
+  usageWeekly: number
+  usageMonthly: number
+  isFreeTier: boolean
+}
+
 export interface UsageSnapshot {
   timestamp: number
   provider: string
@@ -141,6 +152,7 @@ export interface UsageSnapshot {
   proxyQuota?: ProxyQuota
   copilotQuota?: CopilotQuota
   zaiQuota?: ZaiQuota
+  openrouterQuota?: OpenRouterQuota
   anthropicQuota?: AnthropicQuota
   updatedAt: number
   isMissing?: boolean

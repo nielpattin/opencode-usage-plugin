@@ -46,7 +46,8 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
     "proxy": true,
     "copilot": true,
     "zai": true,
-    "anthropic": true
+    "anthropic": true,
+    "openrouter": true
   }
 }
 `
@@ -62,6 +63,7 @@ export async function loadUsageConfig(): Promise<UsageConfig> {
         copilot: true,
         zai: true,
         anthropic: true,
+        openrouter: true,
       },
     }
 
