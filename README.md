@@ -7,6 +7,7 @@ Track AI provider rate limits and quotas in real-time.
 - **Live rate limits** – See Codex/OpenAI hourly/weekly limits at a glance
 - **Proxy quota stats** – Monitor Mirrowel Proxy credentials and tier usage
 - **Copilot usage** – Track GitHub Copilot chat + completions quotas
+- **Z.ai usage** – Track GLM Coding Plan 5-hour token quota and monthly tool quota
 - **Inline status** – Results appear directly in your chat, no context switching
 - **Zero setup** – Auto-detects providers from your existing config
 
@@ -45,11 +46,15 @@ The plugin creates a default config file on first run at:
   // Optional: Request timeout in milliseconds (default: 10000)
   "timeout": 10000,
 
+  // Optional: Z.ai API endpoint (default: "https://api.z.ai")
+  "zaiEndpoint": "https://api.z.ai",
+
   // Optional: Show/hide providers in /usage output
   "providers": {
     "openai": true,
     "proxy": true,
-    "copilot": true
+    "copilot": true,
+    "zai": true
   },
 
   // Model group display configuration (optional)
@@ -108,6 +113,8 @@ Copilot is detected from either of these locations:
 /usage codex
 /usage proxy
 /usage copilot
+/usage zai
+/usage glm
 ```
 
 ### Support the proxy
@@ -123,6 +130,7 @@ Copilot is detected from either of these locations:
 | **Codex / OpenAI** | Auth tokens + `/wham/usage` endpoint |
 | **Mirrowel Proxy** | Local `/v1/quota-stats` endpoint |
 | **GitHub Copilot** | GitHub internal usage APIs |
+| **Z.ai GLM Coding Plan** | `chat.z.ai` auth + Z.ai usage APIs |
 
 ## Troubleshooting
 
@@ -136,6 +144,7 @@ Copilot is detected from either of these locations:
 - Use `providers: { ... }` in config to disable unused providers
 - For Codex: Ensure you have valid auth tokens
 - For Copilot: Check token file locations in Configuration section above
+- For Z.ai: Ensure your OpenCode auth includes `chat.z.ai` credentials
 
 **Config file not found**
 - The plugin auto-creates `usage-config.jsonc` on first run
