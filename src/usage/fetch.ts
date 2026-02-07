@@ -9,7 +9,7 @@ import { loadUsageConfig } from "./config"
 import { loadMergedAuths } from "./auth/loader"
 import { resolveProviderAuths } from "./registry"
 
-const CORE_PROVIDERS = ["codex", "proxy", "copilot", "zai-coding-plan", "openrouter"]
+const CORE_PROVIDERS = ["codex", "proxy", "copilot", "zai-coding-plan", "anthropic", "openrouter"]
 
 export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapshot[]> {
   const target = resolveFilter(filter)
@@ -39,7 +39,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
     })
 
   // Handle special/default fetches
-  for (const id of ["proxy", "copilot"]) {
+  for (const id of ["proxy", "copilot", "anthropic"]) {
     if ((!target || target === id) && isEnabled(id) && !fetched.has(id)) {
       const provider = providers[id]
       if (provider?.fetchUsage) {
@@ -64,7 +64,8 @@ function resolveFilter(f?: string): string | undefined {
     proxy: "proxy", agy: "proxy", gemini: "proxy",
     copilot: "copilot", github: "copilot",
     zai: "zai-coding-plan", glm: "zai-coding-plan",
-    openrouter: "openrouter", or: "openrouter"
+    anthropic: "anthropic", claude: "anthropic",
+    openrouter: "openrouter", or: "openrouter",
   }
   return f ? aliases[f.toLowerCase().trim()] : undefined
 }
@@ -105,4 +106,3 @@ export async function loadAuths() {
   const { auths } = await loadMergedAuths()
   return auths
 }
-

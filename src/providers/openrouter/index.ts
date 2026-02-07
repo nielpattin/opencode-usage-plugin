@@ -11,7 +11,6 @@ import type { OpenRouterAuth, OpenRouterAuthResponse } from "./types"
 function toRateLimitWindow(data: OpenRouterAuthResponse): RateLimitWindow | null {
   const limit = data.data.limit
   const usage = data.data.usage
-  const remaining = data.data.limit_remaining
 
   if (limit <= 0) return null
 
@@ -28,6 +27,7 @@ export const OpenRouterProvider: UsageProvider<OpenRouterAuth> = {
 
   async fetchUsage(auth: OpenRouterAuth): Promise<UsageSnapshot | null> {
     try {
+      if (!auth?.key) return null
       const data = await fetchOpenRouterUsage(auth)
       const now = Date.now()
 
@@ -55,7 +55,7 @@ export const OpenRouterProvider: UsageProvider<OpenRouterAuth> = {
         },
       }
     } catch (error) {
-      console.error("Failed to fetch OpenRouter usage:", error)
+      void error
       return null
     }
   },

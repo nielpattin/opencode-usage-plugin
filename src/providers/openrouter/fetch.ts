@@ -2,7 +2,11 @@
  * Fetch logic for OpenRouter usage monitoring.
  */
 
-import type { OpenRouterAuth, OpenRouterAuthResponse } from "./types"
+import {
+  openRouterAuthResponseSchema,
+  type OpenRouterAuth,
+  type OpenRouterAuthResponse,
+} from "./types"
 
 export async function fetchOpenRouterUsage(auth: OpenRouterAuth): Promise<OpenRouterAuthResponse> {
   const url = "https://openrouter.ai/api/v1/auth/key"
@@ -19,8 +23,7 @@ export async function fetchOpenRouterUsage(auth: OpenRouterAuth): Promise<OpenRo
   }
 
   const data = await response.json()
-  if (data?.data == null || typeof data.data.limit !== 'number' || typeof data.data.usage !== 'number') {
-    throw new Error('Invalid OpenRouter response structure')
-  }
-  return data as OpenRouterAuthResponse
+  const parsed = openRouterAuthResponseSchema.safeParse(data)
+  if (!parsed.success) throw new Error("Invalid OpenRouter response structure")
+  return parsed.data
 }
