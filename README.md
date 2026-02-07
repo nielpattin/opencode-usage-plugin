@@ -9,6 +9,7 @@ Track AI provider rate limits and quotas in real-time.
 - **Proxy quota stats** – Monitor Mirrowel Proxy credentials and tier usage
 - **Copilot usage** – Track GitHub Copilot chat + completions quotas
 - **Z.ai usage** – Track GLM Coding Plan 5-hour token quota and monthly tool quota
+- **OpenRouter usage** – Track API credit usage and remaining balance
 - **Inline status** – Results appear directly in your chat, no context switching
 - **Zero setup** – Auto-detects providers from your existing config
 
@@ -56,7 +57,8 @@ The plugin creates a default config file on first run at:
     "anthropic": true,
     "proxy": true,
     "copilot": true,
-    "zai": true
+    "zai": true,
+    "openrouter": true
   },
 
   // Model group display configuration (optional)
@@ -119,6 +121,8 @@ Copilot is detected from either of these locations:
 /usage copilot
 /usage zai
 /usage glm
+/usage openrouter
+/usage or
 ```
 
 ### Support the proxy
@@ -136,6 +140,7 @@ Copilot is detected from either of these locations:
 | **Mirrowel Proxy** | Local `/v1/quota-stats` endpoint |
 | **GitHub Copilot** | GitHub internal usage APIs |
 | **Z.ai GLM Coding Plan** | `chat.z.ai` auth + Z.ai usage APIs |
+| **OpenRouter** | API key + `openrouter.ai/api/v1/key` |
 
 ## Troubleshooting
 
@@ -151,6 +156,7 @@ Copilot is detected from either of these locations:
 - For Copilot: Check token file locations in Configuration section above
 - For Z.ai: Ensure your OpenCode auth includes `chat.z.ai` credentials
 - For Anthropic: Ensure Claude OAuth credentials are available (`anthropic` in auth.json)
+- For OpenRouter: Ensure OpenRouter API key is available (`openrouter` or `or` in auth.json)
 
 **Config file not found**
 - The plugin auto-creates `usage-config.jsonc` on first run

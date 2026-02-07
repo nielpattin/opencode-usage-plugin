@@ -132,9 +132,9 @@ export interface AnthropicQuota {
 }
 
 export interface OpenRouterQuota {
-  limit: number
+  limit: number | null
   usage: number
-  limitRemaining: number
+  limitRemaining: number | null
   usageDaily: number
   usageWeekly: number
   usageMonthly: number

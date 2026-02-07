@@ -11,7 +11,7 @@ export function formatOpenRouterSnapshot(snapshot: UsageSnapshot): string[] {
 
   const lines = ["→ [OPENROUTER]"]
 
-  if (or.limit === -1) {
+  if (or.limit === null) {
     lines.push(`  ${"Credit:".padEnd(13)} Unlimited`)
     lines.push(`  ${"Used:".padEnd(13)} $${or.usage.toFixed(2)}`)
   } else {
@@ -19,8 +19,9 @@ export function formatOpenRouterSnapshot(snapshot: UsageSnapshot): string[] {
     const resetSuffix = snapshot.primary ? formatResetSuffix(snapshot.primary.resetsAt) : ""
 
     lines.push(`  ${"Credit:".padEnd(13)} ${formatBar(remainingPct)} ${remainingPct.toFixed(0)}% left`)
+    const remaining = or.limitRemaining === null ? "Unlimited" : `$${or.limitRemaining.toFixed(2)}`
     lines.push(`  ${"Used:".padEnd(13)} $${or.usage.toFixed(2)} / $${or.limit.toFixed(2)}`)
-    lines.push(`  ${"Remaining:".padEnd(13)} $${or.limitRemaining.toFixed(2)}${resetSuffix}`)
+    lines.push(`  ${"Remaining:".padEnd(13)} ${remaining}${resetSuffix}`)
   }
 
   return lines

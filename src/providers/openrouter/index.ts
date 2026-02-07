@@ -12,7 +12,7 @@ function toRateLimitWindow(data: OpenRouterAuthResponse): RateLimitWindow | null
   const limit = data.data.limit
   const usage = data.data.usage
 
-  if (limit <= 0) return null
+  if (limit === null || limit <= 0) return null
 
   return {
     usedPercent: (usage / limit) * 100,
@@ -40,8 +40,8 @@ export const OpenRouterProvider: UsageProvider<OpenRouterAuth> = {
         codeReview: null,
         credits: {
           hasCredits: true,
-          unlimited: data.data.limit === -1,
-          balance: data.data.limit === -1 ? "Unlimited" : `$${data.data.limit_remaining.toFixed(2)}`,
+          unlimited: data.data.limit === null,
+          balance: data.data.limit_remaining === null ? "Unlimited" : `$${data.data.limit_remaining.toFixed(2)}`,
         },
         updatedAt: now,
         openrouterQuota: {

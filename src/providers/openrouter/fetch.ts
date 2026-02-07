@@ -9,7 +9,7 @@ import {
 } from "./types"
 
 export async function fetchOpenRouterUsage(auth: OpenRouterAuth): Promise<OpenRouterAuthResponse> {
-  const url = "https://openrouter.ai/api/v1/auth/key"
+  const url = "https://openrouter.ai/api/v1/key"
 
   const response = await fetch(url, {
     headers: {
