@@ -16,25 +16,38 @@ export function formatBar(pct: number): string {
 
 export function formatResetSuffix(resetAt: number | null): string {
   if (!resetAt) return ""
-  return ` (resets in ${formatTimeDelta(resetAt)})`
+  const delta = formatTimeDelta(resetAt)
+  return delta === "just refreshed" ? ` (${delta})` : ` (resets in ${delta})`
 }
 
 export function formatResetSuffixISO(iso: string): string {
   try {
     const at = Math.floor(new Date(iso).getTime() / 1000)
-    return ` (resets in ${formatTimeDelta(at)})`
+    const delta = formatTimeDelta(at)
+    return delta === "just refreshed" ? ` (${delta})` : ` (resets in ${delta})`
   } catch { return "" }
 }
 
 function formatTimeDelta(at: number): string {
   const atSeconds = at > 1e11 ? Math.floor(at / 1000) : at
-  
+
   const diff = atSeconds - Math.floor(Date.now() / 1000)
-  if (diff <= 0) return "now"
-  if (diff < 60) return `${diff}s`
-  if (diff < 3600) return `${Math.ceil(diff / 60)}m`
-  if (diff < 86400) return `${Math.round(diff / 3600)}h`
-  return `${Math.round(diff / 86400)}d`
+  if (diff <= 0) return "just refreshed"
+
+  const days = Math.floor(diff / 86400)
+  const hours = Math.floor((diff % 86400) / 3600)
+  const minutes = Math.floor((diff % 3600) / 60)
+
+  if (days > 0) {
+    return hours > 0 ? `${days}d${hours}hrs` : `${days}d`
+  }
+
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}hrs${minutes}m` : `${hours}hrs`
+  }
+
+  if (minutes > 0) return `${minutes}m`
+  return `${diff}s`
 }
 
 export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
@@ -48,7 +61,9 @@ export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
   const instructions: Record<string, string> = {
     codex: "if you dont have codex oauth, please set your usage-config.jsonc to openai: false",
     proxy: "check your usage-config.jsonc. Default: endpoint http://localhost:8000, apiKey VerysecretKey. If you changed these during proxy setup, update your config to match. Or set proxy: false to disable.",
-    copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false"
+    copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false",
+    anthropic: "if you are not using Claude Code with a subscription, please set your usage-config.jsonc to anthropic: false",
+    openrouter: "if you are not using OpenRouter API keys, please set your usage-config.jsonc to openrouter: false",
   }
 
   const lines = [`→ [${provider.toUpperCase()}]${order}${account} - ${instructions[provider] || ""}`]

@@ -9,7 +9,7 @@ import { loadUsageConfig } from "./config"
 import { loadMergedAuths } from "./auth/loader"
 import { resolveProviderAuths } from "./registry"
 
-const CORE_PROVIDERS = ["codex", "proxy", "copilot", "zai-coding-plan"]
+const CORE_PROVIDERS = ["codex", "proxy", "copilot", "zai-coding-plan", "anthropic", "openrouter"]
 
 export type FetchUsageOptions = {
   allOpenAIAccounts?: boolean
@@ -24,6 +24,7 @@ export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOp
   const isEnabled = (id: string) => {
     if (id === "codex") return toggles.openai !== false
     if (id === "zai-coding-plan") return toggles.zai !== false
+    if (id === "openrouter") return toggles.openrouter !== false
     return (toggles as Record<string, boolean>)[id] !== false
   }
 
@@ -54,7 +55,7 @@ export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOp
   const fetches: Array<Promise<void>> = []
 
   // Handle special/default fetches
-  for (const id of ["proxy", "copilot"]) {
+  for (const id of ["proxy", "copilot", "anthropic"]) {
     if ((!target || target === id) && isEnabled(id) && !resolvedProviders.has(id)) {
       const provider = providers[id]
       if (provider?.fetchUsage) {
@@ -90,7 +91,9 @@ function resolveFilter(f?: string): string | undefined {
     codexs: "codex",
     proxy: "proxy", agy: "proxy", gemini: "proxy",
     copilot: "copilot", github: "copilot",
-    zai: "zai-coding-plan", glm: "zai-coding-plan"
+    zai: "zai-coding-plan", glm: "zai-coding-plan",
+    anthropic: "anthropic", claude: "anthropic",
+    openrouter: "openrouter", or: "openrouter",
   }
   return f ? aliases[f.toLowerCase().trim()] : undefined
 }
