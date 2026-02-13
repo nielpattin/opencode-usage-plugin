@@ -39,6 +39,7 @@ function formatTimeDelta(at: number): string {
 
 export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
   const { provider } = snapshot
+  const account = snapshot.accountLabel ? ` [${snapshot.accountLabel}]` : ""
   const configPath = getConfigPath()
   const instructions: Record<string, string> = {
     codex: "if you dont have codex oauth, please set your usage-config.jsonc to openai: false",
@@ -46,7 +47,7 @@ export function formatMissingSnapshot(snapshot: UsageSnapshot): string[] {
     copilot: "if you are not running GitHub Copilot, please set your usage-config.jsonc to copilot: false"
   }
 
-  const lines = [`→ [${provider.toUpperCase()}] - ${instructions[provider] || ""}`]
+  const lines = [`→ [${provider.toUpperCase()}]${account} - ${instructions[provider] || ""}`]
   if (snapshot.missingReason) lines.push("", `Reason: ${snapshot.missingReason}`)
   if (snapshot.missingDetails?.length) {
     lines.push("", "Details:", ...snapshot.missingDetails.map((d: string) => `- ${d}`))

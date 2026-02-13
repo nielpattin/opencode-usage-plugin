@@ -63,13 +63,32 @@ const providerDescriptors: ProviderDescriptor[] = [
   },
 ]
 
+const CODEX_RESERVED_LABELS = new Set([
+  "codex",
+  "openai",
+  "copilot",
+  "github-copilot",
+  "zai-coding-plan",
+  "zai",
+  "glm",
+  "proxy",
+])
+
+const CODEX_FALLBACK_LABELS = new Set(["codex", "openai"])
+
+function isCodexOAuthEntry(entry: AuthEntry | undefined): boolean {
+  if (!entry) return false
+  if (entry.type && entry.type !== "oauth" && entry.type !== "token") return false
+  return Boolean(entry.access || entry.key || entry.refresh)
+}
+
 function resolveCodexAuthPairs(auths: AuthRecord, allOpenAIAccounts: boolean): Array<[string, AuthEntry]> {
   if (!allOpenAIAccounts) {
     const single = ["codex", "openai"].find((key) => Boolean(auths[key]))
     return single && auths[single] ? [["", auths[single]]] : []
   }
 
-  const accountKeys = Object.keys(auths).filter((key) => key.startsWith("account-"))
+  const accountKeys = Object.keys(auths).filter((key) => !CODEX_RESERVED_LABELS.has(key) && isCodexOAuthEntry(auths[key]))
   const fallbackKeys = ["codex", "openai"].filter((key) => Boolean(auths[key]))
   const orderedKeys = [...accountKeys, ...fallbackKeys]
 
@@ -90,8 +109,8 @@ function resolveCodexAuthPairs(auths: AuthRecord, allOpenAIAccounts: boolean): A
       continue
     }
 
-    const isExistingAccount = existing[0].startsWith("account-")
-    const isCurrentAccount = key.startsWith("account-")
+    const isExistingAccount = !CODEX_FALLBACK_LABELS.has(existing[0])
+    const isCurrentAccount = !CODEX_FALLBACK_LABELS.has(key)
     if (!isExistingAccount && isCurrentAccount) {
       pairsByIdentity.set(identity, [key, entry])
     }

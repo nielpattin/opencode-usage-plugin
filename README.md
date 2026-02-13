@@ -113,6 +113,16 @@ Copilot is detected from either of these locations:
 - `/usage codex` = current/default OpenAI account
 - `/usage codexs` = all detected OpenAI OAuth accounts
 
+### Cycle OpenAI OAuth account
+
+```
+/switch
+```
+
+- Cycles to the next OAuth object from `~/.local/share/opencode/openai.json`
+- Replaces only `openai` value in `~/.local/share/opencode/auth.json` (no label keys copied)
+- Immediately prints usage for the newly active OpenAI OAuth account
+
 ### Support the proxy
 
 ```

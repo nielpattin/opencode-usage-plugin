@@ -97,7 +97,8 @@ function appendMissingStates(
         credits: null,
         updatedAt: Date.now(),
         isMissing: true,
-        missingReason: id === "codex" ? "Auth resolution failed" : undefined,
+        missingReason:
+          id === "codex" ? "Usage request failed (missing auth, expired token, or unavailable endpoint)" : undefined,
         missingDetails: id === "codex" ? diagnostics : undefined
       })
     }

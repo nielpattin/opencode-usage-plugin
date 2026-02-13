@@ -7,6 +7,7 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import type { UsageState } from "../state"
 import { fetchUsageSnapshots, resolveProviderFilter } from "../usage"
 import { renderUsageStatus, sendStatusMessage } from "../ui"
+import { cycleOpenAIOAuth, ensureFreshOpenAIOAuth } from "../usage/auth/switch"
 
 type UsageClient = PluginInput["client"]
 
@@ -31,9 +32,81 @@ export function commandHooks(options: {
         template: "/usage",
         description: "Show API usage and rate limits (codex/codexs/proxy or all)",
       }
+      config.command["switch"] = {
+        template: "/switch",
+        description: "Cycle OpenAI OAuth account and show current Codex usage",
+      }
     },
 
     "command.execute.before": async (input) => {
+      if (input.command === "switch") {
+        const switched = await cycleOpenAIOAuth()
+        if (!switched.ok) {
+          await sendStatusMessage({
+            client: options.client,
+            state: options.state,
+            sessionID: input.sessionID,
+            text: `▣ Switch failed\n\n${switched.reason}`,
+          })
+          throw new Error("__USAGE_SWITCH_HANDLED__")
+        }
+
+        let selectedAuth = switched.selected.auth
+        let refreshWarning = ""
+        try {
+          selectedAuth = await ensureFreshOpenAIOAuth(switched.selected.auth)
+        } catch (error: any) {
+          refreshWarning = `\n\nToken refresh failed: ${error?.message || "unknown error"}`
+        }
+
+        const setResult = await options.client.auth
+          .set({
+            path: { id: "openai" },
+            body: selectedAuth,
+          })
+          .catch((error) => ({ error }))
+
+        if ((setResult as any)?.error) {
+          await sendStatusMessage({
+            client: options.client,
+            state: options.state,
+            sessionID: input.sessionID,
+            text: `▣ Switch failed\n\nUnable to update openai auth in auth.json`,
+          })
+          throw new Error("__USAGE_SWITCH_HANDLED__")
+        }
+
+        await options.client.instance.dispose().catch(() => {})
+
+        const snapshots = await fetchUsageSnapshots("codex")
+        const labeledSnapshots = snapshots.map((snapshot) => {
+          if (snapshot.provider !== "codex") return snapshot
+          return {
+            ...snapshot,
+            accountLabel: switched.selected.label,
+          }
+        })
+
+        await sendStatusMessage({
+          client: options.client,
+          state: options.state,
+          sessionID: input.sessionID,
+          text: `▣ Switched OpenAI OAuth\n\n${switched.previousLabel ? `From [${switched.previousLabel}] ` : ""}Now [${
+            switched.selected.label
+          }] (${switched.total} total)${refreshWarning}`,
+        })
+
+        await renderUsageStatus({
+          client: options.client,
+          state: options.state,
+          sessionID: input.sessionID,
+          snapshots: labeledSnapshots,
+          filter: "codex",
+        })
+
+        throw new Error("__USAGE_SWITCH_HANDLED__")
+      }
+
       if (input.command !== "usage") return
 
       const args = input.arguments?.trim() || ""
