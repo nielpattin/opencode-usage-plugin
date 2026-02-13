@@ -17,7 +17,13 @@ Track AI provider rate limits and quotas in real-time.
 
 ## Installation
 
-Add to your `opencode.json`:
+### Quick Start (Non-Technical)
+
+1. Clone this repo into your OpenCode plugins folder.
+2. In this plugin folder, run:
+   - `npm install`
+   - `npm run build`
+3. Add this plugin path to your `opencode.json`:
 
 ```json
 {
@@ -26,10 +32,13 @@ Add to your `opencode.json`:
 }
 ```
 
-- PLS: GO TO THE PLUGIN DIRECTORY AND RUN `npm install` TO INSTALL DEPENDENCIES.
-- AND THEN RUN `npm run build` TO BUILD THE PLUGIN.
+4. Restart OpenCode.
 
-- Restart OpenCode to load the plugin.
+Now you can already use:
+- `/usage`
+- `/usage codex`
+- `/usage anthropic`
+- `/usage openrouter`
 
 ## Configuration
 
@@ -107,17 +116,26 @@ Copilot is detected from either of these locations:
 
 ## Usage
 
-### Check all providers
+### Most used commands
+
+Use these first:
 
 ```
 /usage
-```
-
-### Check specific provider
-
-```
 /usage codex
 /usage codexs
+/switch
+/switch 3
+```
+
+- `/usage codex` = current OpenAI account usage
+- `/usage codexs` = all detected OpenAI OAuth accounts
+- `/switch` = move to next account in the `openai.json` list
+- `/switch <order_number>` = jump to a specific account number in the list
+
+### Provider aliases
+
+```
 /usage anthropic
 /usage claude
 /usage proxy
@@ -128,20 +146,48 @@ Copilot is detected from either of these locations:
 /usage or
 ```
 
-- `/usage codex` = current/default OpenAI account
-- `/usage codexs` = all detected OpenAI OAuth accounts
-
 ### Cycle OpenAI OAuth account
-
-```
-/switch
-/switch 3
-```
 
 - Cycles to the next OAuth object from `~/.local/share/opencode/openai.json`
 - You can jump directly by 1-based order: `/switch <order_number>`
 - Replaces only `openai` value in `~/.local/share/opencode/auth.json` (no label keys copied)
 - Immediately prints usage for the newly active OpenAI OAuth account
+
+### One-time setup for multi-account OpenAI switching
+
+If you only use one OpenAI account, you can skip this section.
+
+If you want `/usage codexs` and `/switch` across multiple OpenAI accounts:
+
+1. Run `/connect` for each OpenAI account (one by one).
+2. Build `~/.local/share/opencode/openai.json` as a top-level object of saved accounts.
+3. Each key is just a label (any name you like), each value is that account's OpenAI OAuth object.
+
+Example:
+
+```json
+{
+  "work": {
+    "type": "oauth",
+    "access": "...",
+    "refresh": "...",
+    "expires": 0,
+    "accountId": "..."
+  },
+  "personal": {
+    "type": "oauth",
+    "access": "...",
+    "refresh": "...",
+    "expires": 0,
+    "accountId": "..."
+  }
+}
+```
+
+Notes:
+- The plugin only writes the selected account back into `auth.json` under `openai`.
+- Label keys (like `work`, `personal`) are not copied into `auth.json`.
+- Account order number follows object order in `openai.json`.
 
 ### Support the proxy
 
