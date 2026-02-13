@@ -10,6 +10,7 @@ import { toCreditsSnapshot, toPlanType, toRateLimitWindow, usageResponseSchema }
 type CodexAuth = {
   access?: string
   accountId?: string
+  accountLabel?: string
 }
 
 export const CodexProvider: UsageProvider<CodexAuth> = {
@@ -63,6 +64,8 @@ export const CodexProvider: UsageProvider<CodexAuth> = {
       timestamp: Date.now(),
       updatedAt: Date.now(),
       provider: "codex",
+      accountLabel: auth.accountLabel,
+      accountId: auth.accountId,
       planType,
       primary,
       secondary,

@@ -107,6 +107,8 @@ export interface ZaiQuota {
 export interface UsageSnapshot {
   timestamp: number
   provider: string
+  accountLabel?: string
+  accountId?: string
   planType: PlanType | null
   primary: RateLimitWindow | null
   secondary: RateLimitWindow | null

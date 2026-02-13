@@ -105,9 +105,13 @@ Copilot is detected from either of these locations:
 
 ```
 /usage codex
+/usage codexs
 /usage proxy
 /usage copilot
 ```
+
+- `/usage codex` = current/default OpenAI account
+- `/usage codexs` = all detected OpenAI OAuth accounts
 
 ### Support the proxy
 

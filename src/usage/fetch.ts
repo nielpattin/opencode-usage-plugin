@@ -11,7 +11,11 @@ import { resolveProviderAuths } from "./registry"
 
 const CORE_PROVIDERS = ["codex", "proxy", "copilot", "zai-coding-plan"]
 
-export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapshot[]> {
+export type FetchUsageOptions = {
+  allOpenAIAccounts?: boolean
+}
+
+export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOptions = {}): Promise<UsageSnapshot[]> {
   const target = resolveFilter(filter)
   const config = await loadUsageConfig().catch(() => null)
   const toggles = config?.providers ?? {}
@@ -23,8 +27,10 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   }
 
   const { auths, codexDiagnostics } = await loadMergedAuths()
-  const entries = resolveProviderAuths(auths, null)
-  const snapshotsMap = new Map<string, UsageSnapshot>()
+  const entries = resolveProviderAuths(auths, null, {
+    allOpenAIAccounts: options.allOpenAIAccounts === true,
+  })
+  const snapshots: UsageSnapshot[] = []
   const fetched = new Set<string>()
 
   const fetches = entries
@@ -32,7 +38,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
     .map(async e => {
       const snap = await providers[e.providerID]?.fetchUsage?.(e.auth).catch(() => null)
       if (snap) { 
-        snapshotsMap.set(e.providerID, snap)
+        snapshots.push(snap)
         fetched.add(e.providerID) 
       }
     })
@@ -44,7 +50,7 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
       if (provider?.fetchUsage) {
         fetches.push(provider.fetchUsage(undefined).then(s => {
           if (s) { 
-            snapshotsMap.set(id, s)
+            snapshots.push(s)
             fetched.add(id) 
           }
         }).catch(() => {}))
@@ -53,13 +59,13 @@ export async function fetchUsageSnapshots(filter?: string): Promise<UsageSnapsho
   }
 
   await Promise.race([Promise.all(fetches), new Promise(r => setTimeout(r, 5000))])
-  const snapshots = Array.from(snapshotsMap.values())
   return appendMissingStates(snapshots, fetched, isEnabled, target, codexDiagnostics)
 }
 
 function resolveFilter(f?: string): string | undefined {
   const aliases: Record<string, string> = { 
     codex: "codex", openai: "codex", gpt: "codex", 
+    codexs: "codex",
     proxy: "proxy", agy: "proxy", gemini: "proxy",
     copilot: "copilot", github: "copilot",
     zai: "zai-coding-plan", glm: "zai-coding-plan"
@@ -103,4 +109,3 @@ export async function loadAuths() {
   const { auths } = await loadMergedAuths()
   return auths
 }
-

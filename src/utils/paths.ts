@@ -24,6 +24,7 @@ export function getPossibleAuthPaths(): string[] {
   // Linux/other
   const dataHome = process.env.XDG_DATA_HOME || join(home, ".local", "share")
   pathSet.add(join(dataHome, "opencode", "auth.json"))
+  pathSet.add(join(dataHome, "opencode", "openai.json"))
   pathSet.add(join(home, ".codex", "auth.json"))
 
   return Array.from(pathSet)

@@ -22,11 +22,15 @@ type ProviderAuthEntry =
   | { providerID: "copilot"; auth: CopilotAuthData }
   | { providerID: "zai-coding-plan"; auth: ZaiAuth }
 
+export type AuthResolutionOptions = {
+  allOpenAIAccounts?: boolean
+}
+
 type ProviderDescriptor = {
   id: ProviderAuthEntry["providerID"]
   authKeys: string[]
   requiresOAuth: boolean
-  buildAuth: (entry: AuthEntry, usageToken: string | null) => ProviderAuthEntry["auth"]
+  buildAuth: (entry: AuthEntry, key: string, usageToken: string | null) => ProviderAuthEntry["auth"]
 }
 
 const providerDescriptors: ProviderDescriptor[] = [
@@ -34,9 +38,10 @@ const providerDescriptors: ProviderDescriptor[] = [
     id: "codex",
     authKeys: ["codex", "openai"],
     requiresOAuth: true,
-    buildAuth: (entry) => ({
+    buildAuth: (entry, key) => ({
       access: entry.access || entry.key,
       accountId: entry.accountId,
+      accountLabel: key || undefined,
     }),
   },
   {
@@ -58,17 +63,74 @@ const providerDescriptors: ProviderDescriptor[] = [
   },
 ]
 
-export function resolveProviderAuths(auths: AuthRecord, usageToken: string | null): ProviderAuthEntry[] {
+function resolveCodexAuthPairs(auths: AuthRecord, allOpenAIAccounts: boolean): Array<[string, AuthEntry]> {
+  if (!allOpenAIAccounts) {
+    const single = ["codex", "openai"].find((key) => Boolean(auths[key]))
+    return single && auths[single] ? [["", auths[single]]] : []
+  }
+
+  const accountKeys = Object.keys(auths).filter((key) => key.startsWith("account-"))
+  const fallbackKeys = ["codex", "openai"].filter((key) => Boolean(auths[key]))
+  const orderedKeys = [...accountKeys, ...fallbackKeys]
+
+  const pairsByIdentity = new Map<string, [string, AuthEntry]>()
+
+  for (const key of orderedKeys) {
+    const entry = auths[key]
+    if (!entry) continue
+
+    const hasIdentityFields = Boolean(entry.accountId || entry.access || entry.key)
+    const identity = hasIdentityFields
+      ? `${entry.accountId || ""}|${entry.access || entry.key || ""}`
+      : `key:${key}`
+
+    const existing = pairsByIdentity.get(identity)
+    if (!existing) {
+      pairsByIdentity.set(identity, [key, entry])
+      continue
+    }
+
+    const isExistingAccount = existing[0].startsWith("account-")
+    const isCurrentAccount = key.startsWith("account-")
+    if (!isExistingAccount && isCurrentAccount) {
+      pairsByIdentity.set(identity, [key, entry])
+    }
+  }
+
+  return Array.from(pairsByIdentity.values())
+}
+
+function resolveAuthPairs(
+  auths: AuthRecord,
+  descriptor: ProviderDescriptor,
+  options: AuthResolutionOptions,
+): Array<[string, AuthEntry]> {
+  if (descriptor.id === "codex") {
+    return resolveCodexAuthPairs(auths, options.allOpenAIAccounts === true)
+  }
+
+  const matched = descriptor.authKeys.find((key) => Boolean(auths[key]))
+  if (!matched || !auths[matched]) return []
+  return [[matched, auths[matched]]]
+}
+
+export function resolveProviderAuths(
+  auths: AuthRecord,
+  usageToken: string | null,
+  options: AuthResolutionOptions = {},
+): ProviderAuthEntry[] {
   const entries: ProviderAuthEntry[] = []
 
   for (const descriptor of providerDescriptors) {
-    const matched = descriptor.authKeys.find((key) => Boolean(auths[key]))
-    if (!matched) continue
-    const auth = auths[matched]
-    if (!auth) continue
-    if (descriptor.requiresOAuth && auth.type && auth.type !== "oauth" && auth.type !== "token") continue
-    const built = descriptor.buildAuth(auth, usageToken)
-    entries.push({ providerID: descriptor.id, auth: built } as ProviderAuthEntry)
+    const pairs = resolveAuthPairs(auths, descriptor, options)
+    if (pairs.length === 0) continue
+
+    for (const [key, auth] of pairs) {
+      if (descriptor.requiresOAuth && auth.type && auth.type !== "oauth" && auth.type !== "token") continue
+      const built = descriptor.buildAuth(auth, key, usageToken)
+      if (descriptor.id === "codex" && !(built as CodexAuth).access) continue
+      entries.push({ providerID: descriptor.id, auth: built } as ProviderAuthEntry)
+    }
   }
 
   return entries

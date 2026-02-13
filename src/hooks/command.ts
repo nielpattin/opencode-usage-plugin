@@ -29,7 +29,7 @@ export function commandHooks(options: {
       config.command ??= {}
       config.command["usage"] = {
         template: "/usage",
-        description: "Show API usage and rate limits (codex/proxy or all)",
+        description: "Show API usage and rate limits (codex/codexs/proxy or all)",
       }
     },
 
@@ -37,6 +37,8 @@ export function commandHooks(options: {
       if (input.command !== "usage") return
 
       const args = input.arguments?.trim() || ""
+      const argKey = args.toLowerCase()
+      const allOpenAIAccounts = argKey === "codexs"
 
       if (args === "support") {
         await sendStatusMessage({
@@ -52,8 +54,11 @@ export function commandHooks(options: {
       const targetProvider = resolveProviderFilter(filter)
 
       let effectiveFilter = targetProvider ? filter : undefined
+      if (allOpenAIAccounts) effectiveFilter = "codex"
 
-      const snapshots = await fetchUsageSnapshots(effectiveFilter)
+      const snapshots = await fetchUsageSnapshots(effectiveFilter, {
+        allOpenAIAccounts,
+      })
 
       const filteredSnapshots = snapshots.filter(s => {
         if (targetProvider) return true
