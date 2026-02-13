@@ -29,8 +29,7 @@ OpenCode installs dependencies automatically on next launch.
 
 The plugin creates a default config file on first run at:
 
-**Linux/macOS**: `~/.config/opencode/usage-config.jsonc`  
-**Windows**: `%APPDATA%\opencode\usage-config.jsonc`
+**All Platforms**: `~/.config/opencode/usage-config.jsonc`  
 
 ```jsonc
 {
@@ -127,7 +126,7 @@ Copilot is detected from either of these locations:
 ## Troubleshooting
 
 **Proxy shows "not configured" error**
-- Ensure `endpoint` and `apiKey` are set in `usage-config.jsonc`
+- Ensure `endpoint` and `apiKey` are set in `usage-config.jsonc` (located at `~/.config/opencode/usage-config.jsonc`)
 - Default values: `endpoint: http://localhost:8000`, `apiKey: VerysecretKey`
 - If you changed these during proxy setup, update your config file to match
 - Verify your proxy is running at the specified endpoint

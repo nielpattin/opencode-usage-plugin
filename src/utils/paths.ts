@@ -7,14 +7,8 @@ import { homedir, platform } from "os"
 import { join } from "path"
 import { existsSync } from "fs"
 
-export function getAppDataPath(): string {
-  const plat = platform()
+export function getDataPath(): string {
   const home = homedir()
-
-  if (plat === "win32") {
-    return join(process.env.APPDATA || join(home, "AppData", "Roaming"), "opencode")
-  }
-
   const dataHome = process.env.XDG_DATA_HOME || join(home, ".local", "share")
   return join(dataHome, "opencode")
 }
@@ -24,18 +18,13 @@ export function getAppDataPath(): string {
  * On macOS, OpenCode uses Linux-style paths, so we check both.
  */
 export function getPossibleAuthPaths(): string[] {
-  const plat = platform()
   const home = homedir()
   const pathSet = new Set<string>()
 
-  if (plat === "win32") {
-    pathSet.add(join(process.env.APPDATA || join(home, "AppData", "Roaming"), "opencode", "auth.json"))
-  } else {
-    // Linux/other
-    const dataHome = process.env.XDG_DATA_HOME || join(home, ".local", "share")
-    pathSet.add(join(dataHome, "opencode", "auth.json"))
-    pathSet.add(join(home, ".codex", "auth.json"))
-  }
+  // Linux/other
+  const dataHome = process.env.XDG_DATA_HOME || join(home, ".local", "share")
+  pathSet.add(join(dataHome, "opencode", "auth.json"))
+  pathSet.add(join(home, ".codex", "auth.json"))
 
   return Array.from(pathSet)
 }
