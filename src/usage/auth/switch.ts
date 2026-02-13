@@ -67,25 +67,55 @@ type OpenAISwitchError = {
 type OpenAISwitchSuccess = {
   ok: true
   selected: OpenAICandidate
+  selectedOrder: number
   previousLabel?: string
+  previousOrder?: number
   total: number
 }
 
 export type OpenAISwitchResult = OpenAISwitchError | OpenAISwitchSuccess
 
-export async function cycleOpenAIOAuth(): Promise<OpenAISwitchResult> {
+export async function cycleOpenAIOAuth(orderNumber?: number): Promise<OpenAISwitchResult> {
   const openAIAccountsPath = join(getDataPath(), "openai.json")
   const candidates = await loadOpenAICandidates(openAIAccountsPath)
   if (!candidates.ok) return candidates
 
   const current = await loadCurrentOpenAIAuth(join(getDataPath(), "auth.json"))
   const currentIndex = current ? findCurrentIndex(candidates.value, current) : -1
+
+  if (orderNumber !== undefined) {
+    if (!Number.isInteger(orderNumber) || orderNumber < 1) {
+      return {
+        ok: false,
+        reason: "Order number must be a positive integer (1-based)",
+      }
+    }
+    if (orderNumber > candidates.value.length) {
+      return {
+        ok: false,
+        reason: `Order number ${orderNumber} is out of range (1-${candidates.value.length})`,
+      }
+    }
+
+    const targetIndex = orderNumber - 1
+    return {
+      ok: true,
+      selected: candidates.value[targetIndex],
+      selectedOrder: targetIndex + 1,
+      previousLabel: currentIndex >= 0 ? candidates.value[currentIndex].label : undefined,
+      previousOrder: currentIndex >= 0 ? currentIndex + 1 : undefined,
+      total: candidates.value.length,
+    }
+  }
+
   const nextIndex = (currentIndex + 1) % candidates.value.length
 
   return {
     ok: true,
     selected: candidates.value[nextIndex],
+    selectedOrder: nextIndex + 1,
     previousLabel: currentIndex >= 0 ? candidates.value[currentIndex].label : undefined,
+    previousOrder: currentIndex >= 0 ? currentIndex + 1 : undefined,
     total: candidates.value.length,
   }
 }

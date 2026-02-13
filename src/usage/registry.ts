@@ -79,13 +79,17 @@ const CODEX_FALLBACK_LABELS = new Set(["codex", "openai"])
 function isCodexOAuthEntry(entry: AuthEntry | undefined): boolean {
   if (!entry) return false
   if (entry.type && entry.type !== "oauth" && entry.type !== "token") return false
-  return Boolean(entry.access || entry.key || entry.refresh)
+  return Boolean(entry.access && entry.refresh)
 }
 
 function resolveCodexAuthPairs(auths: AuthRecord, allOpenAIAccounts: boolean): Array<[string, AuthEntry]> {
   if (!allOpenAIAccounts) {
     const single = ["codex", "openai"].find((key) => Boolean(auths[key]))
-    return single && auths[single] ? [["", auths[single]]] : []
+    if (!single || !auths[single]) return []
+
+    const entry = auths[single]
+    const label = single === "openai" ? resolveCurrentOpenAILabel(auths, entry) : ""
+    return [[label, entry]]
   }
 
   const accountKeys = Object.keys(auths).filter((key) => !CODEX_RESERVED_LABELS.has(key) && isCodexOAuthEntry(auths[key]))
@@ -117,6 +121,32 @@ function resolveCodexAuthPairs(auths: AuthRecord, allOpenAIAccounts: boolean): A
   }
 
   return Array.from(pairsByIdentity.values())
+}
+
+function resolveCurrentOpenAILabel(auths: AuthRecord, current: AuthEntry): string {
+  const labels = Object.keys(auths).filter((key) => !CODEX_RESERVED_LABELS.has(key) && isCodexOAuthEntry(auths[key]))
+  let bestLabel = ""
+  let bestScore = 0
+
+  for (const label of labels) {
+    const score = codexAuthMatchScore(auths[label], current)
+    if (score > bestScore) {
+      bestScore = score
+      bestLabel = label
+    }
+  }
+
+  return bestScore > 0 ? bestLabel : ""
+}
+
+function codexAuthMatchScore(candidate: AuthEntry | undefined, current: AuthEntry): number {
+  if (!candidate) return 0
+  let score = 0
+  if (candidate.refresh && current.refresh && candidate.refresh === current.refresh) score += 16
+  if (candidate.accountId && current.accountId && candidate.accountId === current.accountId) score += 8
+  if (candidate.access && current.access && candidate.access === current.access) score += 4
+  if (candidate.key && current.key && candidate.key === current.key) score += 2
+  return score
 }
 
 function resolveAuthPairs(

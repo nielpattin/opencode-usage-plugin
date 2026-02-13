@@ -33,20 +33,22 @@ export function commandHooks(options: {
         description: "Show API usage and rate limits (codex/codexs/proxy or all)",
       }
       config.command["switch"] = {
-        template: "/switch",
-        description: "Cycle OpenAI OAuth account and show current Codex usage",
+        template: "/switch [order_number]",
+        description: "Cycle OpenAI OAuth account (or jump by order) and show current Codex usage",
       }
     },
 
     "command.execute.before": async (input) => {
       if (input.command === "switch") {
-        const switched = await cycleOpenAIOAuth()
+        const raw = input.arguments?.trim() || ""
+        const requestedOrder = raw ? Number(raw) : undefined
+        const switched = await cycleOpenAIOAuth(requestedOrder)
         if (!switched.ok) {
           await sendStatusMessage({
             client: options.client,
             state: options.state,
             sessionID: input.sessionID,
-            text: `▣ Switch failed\n\n${switched.reason}`,
+            text: `▣ Switch failed\n\n${switched.reason}\n\nUsage: /switch or /switch <order_number>`,
           })
           throw new Error("__USAGE_SWITCH_HANDLED__")
         }
@@ -91,9 +93,9 @@ export function commandHooks(options: {
           client: options.client,
           state: options.state,
           sessionID: input.sessionID,
-          text: `▣ Switched OpenAI OAuth\n\n${switched.previousLabel ? `From [${switched.previousLabel}] ` : ""}Now [${
-            switched.selected.label
-          }] (${switched.total} total)${refreshWarning}`,
+          text: `▣ Switched OpenAI OAuth\n\n${
+            switched.previousLabel ? `From [${switched.previousLabel}] (#${switched.previousOrder}) ` : ""
+          }Now [${switched.selected.label}] (#${switched.selectedOrder}/${switched.total})${refreshWarning}`,
         })
 
         await renderUsageStatus({

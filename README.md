@@ -117,9 +117,11 @@ Copilot is detected from either of these locations:
 
 ```
 /switch
+/switch 3
 ```
 
 - Cycles to the next OAuth object from `~/.local/share/opencode/openai.json`
+- You can jump directly by 1-based order: `/switch <order_number>`
 - Replaces only `openai` value in `~/.local/share/opencode/auth.json` (no label keys copied)
 - Immediately prints usage for the newly active OpenAI OAuth account
 
