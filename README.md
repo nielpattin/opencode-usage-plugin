@@ -22,11 +22,14 @@ Add to your `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@howaboua/opencode-usage-plugin"]
+  "plugin": ["./plugins/opencode-usage-plugin"]
 }
 ```
 
-OpenCode installs dependencies automatically on next launch.
+- PLS: GO TO THE PLUGIN DIRECTORY AND RUN `npm install` TO INSTALL DEPENDENCIES.
+- AND THEN RUN `npm run build` TO BUILD THE PLUGIN.
+
+- Restart OpenCode to load the plugin.
 
 ## Configuration
 
