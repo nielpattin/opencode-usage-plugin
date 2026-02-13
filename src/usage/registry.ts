@@ -174,10 +174,17 @@ export function resolveProviderAuths(
     const pairs = resolveAuthPairs(auths, descriptor, options)
     if (pairs.length === 0) continue
 
-    for (const [key, auth] of pairs) {
+    for (let index = 0; index < pairs.length; index++) {
+      const [key, auth] = pairs[index]
       if (descriptor.requiresOAuth && auth.type && auth.type !== "oauth" && auth.type !== "token") continue
       const built = descriptor.buildAuth(auth, key, usageToken)
       if (descriptor.id === "codex" && !(built as CodexAuth).access) continue
+
+      if (descriptor.id === "codex" && options.allOpenAIAccounts === true) {
+        ;(built as CodexAuth).accountOrder = index + 1
+        ;(built as CodexAuth).accountTotal = pairs.length
+      }
+
       entries.push({ providerID: descriptor.id, auth: built } as ProviderAuthEntry)
     }
   }

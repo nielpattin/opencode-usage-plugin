@@ -11,6 +11,8 @@ type CodexAuth = {
   access?: string
   accountId?: string
   accountLabel?: string
+  accountOrder?: number
+  accountTotal?: number
 }
 
 export const CodexProvider: UsageProvider<CodexAuth> = {
@@ -66,6 +68,8 @@ export const CodexProvider: UsageProvider<CodexAuth> = {
       provider: "codex",
       accountLabel: auth.accountLabel,
       accountId: auth.accountId,
+      accountOrder: auth.accountOrder,
+      accountTotal: auth.accountTotal,
       planType,
       primary,
       secondary,

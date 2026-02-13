@@ -46,8 +46,12 @@ function formatSnapshot(snapshot: UsageSnapshot): string[] {
   if (snapshot.provider === "zai-coding-plan") return formatZaiSnapshot(snapshot)
 
   const plan = snapshot.planType ? ` (${snapshot.planType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())})` : ""
+  const order =
+    typeof snapshot.accountOrder === "number"
+      ? ` [#${snapshot.accountOrder}${typeof snapshot.accountTotal === "number" ? `/${snapshot.accountTotal}` : ""}]`
+      : ""
   const account = snapshot.accountLabel ? ` [${snapshot.accountLabel}]` : ""
-  const lines = [`→ [${snapshot.provider.toUpperCase()}]${account}${plan}`]
+  const lines = [`→ [${snapshot.provider.toUpperCase()}]${order}${account}${plan}`]
 
   const metrics = [
     { label: "Hourly:", data: snapshot.primary },

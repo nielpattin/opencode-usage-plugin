@@ -19,6 +19,7 @@ export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOp
   const target = resolveFilter(filter)
   const config = await loadUsageConfig().catch(() => null)
   const toggles = config?.providers ?? {}
+  const requestTimeoutMs = resolveRequestTimeout(config?.timeout)
   
   const isEnabled = (id: string) => {
     if (id === "codex") return toggles.openai !== false
@@ -30,25 +31,34 @@ export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOp
   const entries = resolveProviderAuths(auths, null, {
     allOpenAIAccounts: options.allOpenAIAccounts === true,
   })
+
+  const resolvedEntries = entries.filter((e) => (!target || e.providerID === target) && isEnabled(e.providerID))
+  const resolvedProviders = new Set<string>(resolvedEntries.map((entry) => entry.providerID))
   const snapshots: UsageSnapshot[] = []
   const fetched = new Set<string>()
 
-  const fetches = entries
-    .filter(e => (!target || e.providerID === target) && isEnabled(e.providerID))
-    .map(async e => {
-      const snap = await providers[e.providerID]?.fetchUsage?.(e.auth).catch(() => null)
-      if (snap) { 
-        snapshots.push(snap)
-        fetched.add(e.providerID) 
-      }
-    })
+  const entryResults = await Promise.all(
+    resolvedEntries.map(async (entry) => {
+      const task = providers[entry.providerID]?.fetchUsage?.(entry.auth) ?? Promise.resolve(null)
+      const snap = await withTimeout(task, requestTimeoutMs).catch(() => null)
+      return { providerID: entry.providerID, snap }
+    }),
+  )
+
+  for (const result of entryResults) {
+    if (!result.snap) continue
+    snapshots.push(result.snap)
+    fetched.add(result.providerID)
+  }
+
+  const fetches: Array<Promise<void>> = []
 
   // Handle special/default fetches
   for (const id of ["proxy", "copilot"]) {
-    if ((!target || target === id) && isEnabled(id) && !fetched.has(id)) {
+    if ((!target || target === id) && isEnabled(id) && !resolvedProviders.has(id)) {
       const provider = providers[id]
       if (provider?.fetchUsage) {
-        fetches.push(provider.fetchUsage(undefined).then(s => {
+        fetches.push(withTimeout(provider.fetchUsage(undefined), requestTimeoutMs).then(s => {
           if (s) { 
             snapshots.push(s)
             fetched.add(id) 
@@ -58,8 +68,20 @@ export async function fetchUsageSnapshots(filter?: string, options: FetchUsageOp
     }
   }
 
-  await Promise.race([Promise.all(fetches), new Promise(r => setTimeout(r, 5000))])
+  await Promise.all(fetches)
   return appendMissingStates(snapshots, fetched, isEnabled, target, codexDiagnostics)
+}
+
+function resolveRequestTimeout(configTimeout: number | undefined): number {
+  if (typeof configTimeout === "number" && Number.isFinite(configTimeout) && configTimeout > 0) {
+    return Math.min(Math.max(configTimeout, 3000), 60000)
+  }
+  return 12000
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs))
+  return Promise.race([promise, timeout])
 }
 
 function resolveFilter(f?: string): string | undefined {

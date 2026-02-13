@@ -109,6 +109,8 @@ export interface UsageSnapshot {
   provider: string
   accountLabel?: string
   accountId?: string
+  accountOrder?: number
+  accountTotal?: number
   planType: PlanType | null
   primary: RateLimitWindow | null
   secondary: RateLimitWindow | null
